@@ -24,5 +24,7 @@ jobs:
     - name: Install DNS Utils
       run: sudo apt install dnsutils -y
     - name: Run DNS Service and Do DNS Dig
-      run: sudo nohup dotnet run & ; dig @127.0.0.1 test.com A +noedns +notcp
+      run: sudo dotnet run
+    - name: Do DNS Dig
+      run: dig @127.0.0.1 test.com A +noedns +notcp
 
