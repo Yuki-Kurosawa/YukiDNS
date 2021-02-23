@@ -23,8 +23,8 @@ jobs:
       run: dotnet build --no-restore
     - name: Install DNS Utils
       run: sudo apt install dnsutils -y
-    - name: remove Bind 9
-      run: sudo apt purge bind9 -y
+    - name: NetStat
+      run: sudo netstat
     - name: Run DNS Service
       run: sudo dotnet run
     - name: Do DNS Dig
