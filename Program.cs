@@ -53,11 +53,11 @@ namespace YukiDNS
                 {
                     dret.ReplyCode = 0;
                     dret.Answer = 1;
-                    List<RRAnswer> answers = new List<RRAnswer>();
+                    List<RRData> answers = new List<RRData>();
 
                     for (var i = 1; i <= dret.Answer; i++)
                     {
-                        var a = RRAnswer.BuildResponse_A(dret.RRQueries[0].byteData, 1, 4, "127.0.0." + i.ToString());
+                        var a = RRData.BuildResponse_A(dret.RRQueries[0].byteData, 1, 4, "127.0.0." + i.ToString());
                         answers.Add(a);
                     }
 
@@ -68,11 +68,11 @@ namespace YukiDNS
                 {
                     dret.ReplyCode = 0;
                     dret.Answer = 1;
-                    List<RRAnswer> answers = new List<RRAnswer>();
+                    List<RRData> answers = new List<RRData>();
 
                     for (var i = 1; i <= dret.Answer; i++)
                     {
-                        var a = RRAnswer.BuildResponse_AAAA(dret.RRQueries[0].byteData, 1, 16, "::1");
+                        var a = RRData.BuildResponse_AAAA(dret.RRQueries[0].byteData, 1, 16, "::1");
                         answers.Add(a);
                     }
 
@@ -83,12 +83,12 @@ namespace YukiDNS
                 {
                     dret.ReplyCode = 0;
                     dret.Answer = 1;
-                    List<RRAnswer> answers = new List<RRAnswer>();
+                    List<RRData> answers = new List<RRData>();
 
                     for (var i = 1; i <= dret.Answer; i++)
                     {
                         string ptr = "ptr.test.com".ToDNSName();
-                        var a = RRAnswer.BuildResponse_PTR(dret.RRQueries[0].byteData, 1, (ushort)ptr.Length, ptr);
+                        var a = RRData.BuildResponse_PTR(dret.RRQueries[0].byteData, 1, (ushort)ptr.Length, ptr);
                         answers.Add(a);
                     }
 
@@ -98,12 +98,12 @@ namespace YukiDNS
                 {
                     dret.ReplyCode = 0;
                     dret.Answer = 1;
-                    List<RRAnswer> answers = new List<RRAnswer>();
+                    List<RRData> answers = new List<RRData>();
 
                     for (var i = 1; i <= dret.Answer; i++)
                     {
                         string ptr = "ptr.test.com".ToDNSName();
-                        var a = RRAnswer.BuildResponse_CNAME(dret.RRQueries[0].byteData, 1, (ushort)ptr.Length, ptr);
+                        var a = RRData.BuildResponse_CNAME(dret.RRQueries[0].byteData, 1, (ushort)ptr.Length, ptr);
                         answers.Add(a);
                     }
 
@@ -113,12 +113,12 @@ namespace YukiDNS
                 {
                     dret.ReplyCode = 0;
                     dret.Answer = 2;
-                    List<RRAnswer> answers = new List<RRAnswer>();
+                    List<RRData> answers = new List<RRData>();
 
                     for (var i = 1; i <= dret.Answer; i++)
                     {
                         string ptr = $@"ns{i}.test.com".ToDNSName();
-                        var a = RRAnswer.BuildResponse_NS(dret.RRQueries[0].byteData, 1, (ushort)ptr.Length, ptr);
+                        var a = RRData.BuildResponse_NS(dret.RRQueries[0].byteData, 1, (ushort)ptr.Length, ptr);
                         answers.Add(a);
                     }
 
@@ -128,12 +128,12 @@ namespace YukiDNS
                 {
                     dret.ReplyCode = 0;
                     dret.Answer = 2;
-                    List<RRAnswer> answers = new List<RRAnswer>();
+                    List<RRData> answers = new List<RRData>();
 
                     for (var i = 1; i <= dret.Answer; i++)
                     {
                         string ptr = $@"mx{i}.test.com".ToDNSName();
-                        var a = RRAnswer.BuildResponse_MX(dret.RRQueries[0].byteData, 1, (ushort)(ptr.Length + 2), (ushort)i, ptr);
+                        var a = RRData.BuildResponse_MX(dret.RRQueries[0].byteData, 1, (ushort)(ptr.Length + 2), (ushort)i, ptr);
                         answers.Add(a);
                     }
 
@@ -143,12 +143,12 @@ namespace YukiDNS
                 {
                     dret.ReplyCode = 0;
                     dret.Answer = 1;
-                    List<RRAnswer> answers = new List<RRAnswer>();
+                    List<RRData> answers = new List<RRData>();
 
                     for (var i = 1; i <= dret.Answer; i++)
                     {
                         string ptr = $@"TXT: HELLO WORLD! FROM DNS";
-                        var a = RRAnswer.BuildResponse_TXT(dret.RRQueries[0].byteData, 1, (ushort)(ptr.Length + 1), (ushort)ptr.Length, ptr);
+                        var a = RRData.BuildResponse_TXT(dret.RRQueries[0].byteData, 1, (ushort)(ptr.Length + 1), (ushort)ptr.Length, ptr);
                         answers.Add(a);
                     }
 
@@ -158,12 +158,12 @@ namespace YukiDNS
                 {
                     dret.ReplyCode = 0;
                     dret.Answer = 1;
-                    List<RRAnswer> answers = new List<RRAnswer>();
+                    List<RRData> answers = new List<RRData>();
 
                     for (var i = 1; i <= dret.Answer; i++)
                     {
                         string ptr = $@"SPF: HELLO WORLD! FROM DNS";
-                        var a = RRAnswer.BuildResponse_SPF(dret.RRQueries[0].byteData, 1, (ushort)(ptr.Length + 1), (ushort)ptr.Length, ptr);
+                        var a = RRData.BuildResponse_SPF(dret.RRQueries[0].byteData, 1, (ushort)(ptr.Length + 1), (ushort)ptr.Length, ptr);
                         answers.Add(a);
                     }
 
@@ -173,13 +173,13 @@ namespace YukiDNS
                 {
                     dret.ReplyCode = 0;
                     dret.Answer = 1;
-                    List<RRAnswer> answers = new List<RRAnswer>();
+                    List<RRData> answers = new List<RRData>();
 
                     for (var i = 1; i <= dret.Answer; i++)
                     {
                         string zone = $@"test.com".ToDNSName();
                         string mbox = $@"admin.test.com".ToDNSName();
-                        var a = RRAnswer.BuildResponse_SOA(dret.RRQueries[0].byteData, 1, (ushort)(zone.Length + mbox.Length + 20),
+                        var a = RRData.BuildResponse_SOA(dret.RRQueries[0].byteData, 1, (ushort)(zone.Length + mbox.Length + 20),
                             zone, mbox, 1, 2, 3, 4, 5);
                         answers.Add(a);
                     }
@@ -190,12 +190,12 @@ namespace YukiDNS
                 {
                     dret.ReplyCode = 0;
                     dret.Answer = 1;
-                    List<RRAnswer> answers = new List<RRAnswer>();
+                    List<RRData> answers = new List<RRData>();
 
                     for (var i = 1; i <= dret.Answer; i++)
                     {
                         string zone = $@"test.com".ToDNSName();
-                        var a = RRAnswer.BuildResponse_SRV(dret.RRQueries[0].byteData, 1, (ushort)(zone.Length + 6),
+                        var a = RRData.BuildResponse_SRV(dret.RRQueries[0].byteData, 1, (ushort)(zone.Length + 6),
                             1, 2, 53, zone);
                         answers.Add(a);
                     }
@@ -206,13 +206,13 @@ namespace YukiDNS
                 {
                     dret.ReplyCode = 0;
                     dret.Answer = 1;
-                    List<RRAnswer> answers = new List<RRAnswer>();
+                    List<RRData> answers = new List<RRData>();
 
                     for (var i = 1; i <= dret.Answer; i++)
                     {
                         string zone = $@"test.com";
                         string tag = "issue";
-                        var a = RRAnswer.BuildResponse_CAA(dret.RRQueries[0].byteData, 1, (ushort)(zone.Length + tag.Length + 2),
+                        var a = RRData.BuildResponse_CAA(dret.RRQueries[0].byteData, 1, (ushort)(zone.Length + tag.Length + 2),
                             0,(ushort)tag.Length,tag, zone);
                         answers.Add(a);
                     }
