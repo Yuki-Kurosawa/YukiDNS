@@ -23,8 +23,8 @@ jobs:
       run: dotnet build --no-restore
     - name: Install DNS Utils
       run: sudo apt install dnsutils -y
-    - name: NetStat
-      run: sudo lsof -i
+    - name: Kill Systemd Resolve
+      run: sudo killall systemd-resolve
     - name: Run DNS Service
       run: sudo dotnet run
     - name: Do DNS Dig
