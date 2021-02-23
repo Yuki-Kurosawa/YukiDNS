@@ -24,9 +24,11 @@ jobs:
     - name: Install DNS Utils
       run: sudo apt install dnsutils -y
     - name: Kill Systemd Resolve
-      run: sudo killall systemd-resolve
+      run: sudo service systemd-resolved stop
     - name: Run DNS Service
       run: sudo dotnet run
     - name: Do DNS Dig
       run: dig @127.0.0.1 test.com A +noedns +notcp
+    - name: End Test
+      run: killall dotnet && service systemd-resolved start
 
