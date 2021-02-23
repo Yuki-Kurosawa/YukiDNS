@@ -1,0 +1,16 @@
+B:\VSProjects\YukiDNS\bin\Debug\net5.0\YukiDNS.exe
+B:\VSProjects\YukiDNS\bin\Debug\net5.0\YukiDNS.deps.json
+B:\VSProjects\YukiDNS\bin\Debug\net5.0\YukiDNS.runtimeconfig.json
+B:\VSProjects\YukiDNS\bin\Debug\net5.0\YukiDNS.runtimeconfig.dev.json
+B:\VSProjects\YukiDNS\bin\Debug\net5.0\YukiDNS.dll
+B:\VSProjects\YukiDNS\bin\Debug\net5.0\ref\YukiDNS.dll
+B:\VSProjects\YukiDNS\bin\Debug\net5.0\YukiDNS.pdb
+B:\VSProjects\YukiDNS\obj\Debug\net5.0\YukiDNS.csprojAssemblyReference.cache
+B:\VSProjects\YukiDNS\obj\Debug\net5.0\YukiDNS.GeneratedMSBuildEditorConfig.editorconfig
+B:\VSProjects\YukiDNS\obj\Debug\net5.0\YukiDNS.AssemblyInfoInputs.cache
+B:\VSProjects\YukiDNS\obj\Debug\net5.0\YukiDNS.AssemblyInfo.cs
+B:\VSProjects\YukiDNS\obj\Debug\net5.0\YukiDNS.csproj.CoreCompileInputs.cache
+B:\VSProjects\YukiDNS\obj\Debug\net5.0\YukiDNS.dll
+B:\VSProjects\YukiDNS\obj\Debug\net5.0\ref\YukiDNS.dll
+B:\VSProjects\YukiDNS\obj\Debug\net5.0\YukiDNS.pdb
+B:\VSProjects\YukiDNS\obj\Debug\net5.0\YukiDNS.genruntimeconfig.cache
