@@ -22,9 +22,9 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Install DNS Utils
-      run: apt install dns-utils -y
+      run: sudo apt install dns-utils -y
     - name: Run DNS Service
-      run: nohup dotnet run &
+      run: sudo nohup dotnet run &
     - name: Do DNS Dig
       run: dig @127.0.0.1 test.com A +noedns +notcp
-      
+
