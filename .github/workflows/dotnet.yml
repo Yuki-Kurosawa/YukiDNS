@@ -23,8 +23,6 @@ jobs:
       run: dotnet build --no-restore
     - name: Install DNS Utils
       run: sudo apt install dnsutils -y
-    - name: Run DNS Service
-      run: sudo nohup dotnet run &
-    - name: Do DNS Dig
-      run: dig @127.0.0.1 test.com A +noedns +notcp
+    - name: Run DNS Service and Do DNS Dig
+      run: sudo nohup dotnet run & ; dig @127.0.0.1 test.com A +noedns +notcp
 
