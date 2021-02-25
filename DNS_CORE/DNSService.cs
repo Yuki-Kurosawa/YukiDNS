@@ -33,7 +33,13 @@ namespace YukiDNS.DNS_CORE
             {
                 var ret = tcp.AcceptTcpClientAsync().Result;
                 var req = new byte[1000];
-                ret.GetStream().Read(req,0,1000);
+
+                var str = ret.GetStream();
+                int size=str.Read(req,0,1000);
+
+                req = req.Take(size).ToArray();
+
+                req = req.Skip(2).ToArray();
 
 
                 var dns = ParseDNSRequest(req);
@@ -42,8 +48,12 @@ namespace YukiDNS.DNS_CORE
 
                 byte[] buf = dret.To();
 
-                ret.GetStream().Write(buf, 0, buf.Length);
-                ret.GetStream().Flush();
+
+                str.Write(new[] { (byte)(buf.Length / 256) }, 0, 1);
+                str.Write(new[] { (byte)(buf.Length % 256) }, 0, 1);
+                str.Write(buf, 0, buf.Length);
+                str.Flush();
+                str.Close();
                 ret.Close();
             }
         }
