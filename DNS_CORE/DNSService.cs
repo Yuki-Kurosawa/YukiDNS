@@ -27,6 +27,7 @@ namespace YukiDNS.DNS_CORE
         private static void DNS_THREAD_TCP()
         {
             TcpListener tcp = new TcpListener(new IPEndPoint(IPAddress.Any, 53));
+            tcp.Start();
 
             while (true)
             {

@@ -26,7 +26,7 @@ jobs:
     - name: Kill Systemd Resolve
       run: sudo service systemd-resolved stop
     - name: Run DNS Service
-      run: sudo dotnet run dns 
+      run: sudo nohup dotnet run dns &
     - name: Do DNS Dig (UDP)
       run: dig @127.0.0.1 test.com A +noedns +notcp
     - name: Do DNS Dig (TCP)
