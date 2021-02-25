@@ -20,7 +20,7 @@ namespace YukiDNS.DNS_CORE
             Thread dns = new Thread(DNS_THREAD_UDP);
             dns.Start();
 
-            Thread dnstcp = new Thread(DNS_THREAD_UDP);
+            Thread dnstcp = new Thread(DNS_THREAD_TCP);
             dnstcp.Start();
         }
 
