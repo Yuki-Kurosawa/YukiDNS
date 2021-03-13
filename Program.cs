@@ -14,6 +14,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using YukiDNS.DNS_CORE;
 
@@ -27,7 +28,15 @@ namespace YukiDNS
             if (args[0] == "dns") {
                 DNSService.Start();
             }
+            else if (args[0] == "zone")
+            {
+                string[] data = File.ReadAllLines(@"test.zone");
 
+                foreach(string line in data)
+                {
+                    Console.WriteLine(line);
+                }
+            }
             else
             {
                 #region DO ROOT CA

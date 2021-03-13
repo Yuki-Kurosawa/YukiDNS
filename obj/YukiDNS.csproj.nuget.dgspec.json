@@ -28,10 +28,10 @@
           "net5.0"
         ],
         "sources": {
-          "B:\\NuGet": {},
           "C:\\Program Files (x86)\\DevExpress 18.1\\Components\\System\\Components\\Packages": {},
           "C:\\Program Files (x86)\\DevExpress 19.2\\Components\\System\\Components\\Packages": {},
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "Y:\\Github\\CefSharp\\NuGet": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -49,6 +49,12 @@
       "frameworks": {
         "net5.0": {
           "targetAlias": "net5.0",
+          "dependencies": {
+            "Portable.BouncyCastle": {
+              "target": "Package",
+              "version": "[1.8.10, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",

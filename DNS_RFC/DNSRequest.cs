@@ -141,16 +141,16 @@ namespace YukiDNS.DNS_RFC
 
             //FLAGS
             ushort Flags = 0;
-            Flags |= IsResponse ? 32768 : 0;
+            Flags |= (ushort)(IsResponse ? 32768 : 0);
             Flags |= (ushort)((ushort)OpCode * 2048);
-            Flags |= IsAuthority ? 1024 : 0;
-            Flags |= Truncated ? 512 : 0;
-            Flags |= RecursionDesired ? 256 : 0;
-            Flags |= RecursionAccepted ? 128 : 0;
-            Flags |= Z ? 64 : 0;
-            Flags |= Authed ? 32 : 0;
-            Flags |= AuthData ? 16 : 0;
-            Flags |= ReplyCode;
+            Flags |= (ushort)(IsAuthority ? 1024 : 0);
+            Flags |= (ushort)(Truncated ? 512 : 0);
+            Flags |= (ushort)(RecursionDesired ? 256 : 0);
+            Flags |= (ushort)(RecursionAccepted ? 128 : 0);
+            Flags |= (ushort)(Z ? 64 : 0);
+            Flags |= (ushort)(Authed ? 32 : 0);
+            Flags |= (ushort)(AuthData ? 16 : 0);
+            Flags |= (ushort)ReplyCode;
 
 
             ret.Add((byte)(Flags / 256));

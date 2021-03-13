@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "YukiDNS": {
+      "commandName": "Project",
+      "commandLineArgs": "zone"
+    }
+  }
+}
