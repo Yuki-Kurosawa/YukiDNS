@@ -16,13 +16,13 @@ namespace YukiDNS.DNS_RFC
 
         public DNSOpType OpCode { get; set; }//4
 
-        public bool IsAuthority { get; set; }//1
+        public bool IsAuthority { get; set; }//1 AA
 
-        public bool Truncated { get; set; }//1
+        public bool Truncated { get; set; }//1 TC
 
-        public bool RecursionDesired { get; set; }//1
+        public bool RecursionDesired { get; set; }//1 RD
 
-        public bool RecursionAccepted { get; set; }//1
+        public bool RecursionAccepted { get; set; }//1 RA
 
         public bool Z { get; set; }//1
 
