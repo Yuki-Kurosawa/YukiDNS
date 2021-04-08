@@ -4,3 +4,5 @@ build_property.TargetPlatformMinVersion =
 build_property.UsingMicrosoftNETSdkWeb = 
 build_property.ProjectTypeGuids = 
 build_property._SupportedPlatformList = Android,iOS,Linux,macOS,Windows
+build_property.RootNamespace = YukiDNS
+build_property.ProjectDir = b:\VSProjects\YukiDNS\

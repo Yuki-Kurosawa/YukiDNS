@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "A1nFc9tbJRHp8VmrSj7G1YZkj6Xb+vpO3i49Q/MR6lOLP1PBAegpPeBU83qbuENzQg0WQHu5YKoaPyXBeKDAEw==",
+  "dgSpecHash": "/wD5Y2pQzsT9+ygkjPU6pYAeeU9ivWFqt0sdlWy5Lw0wQmZzYBL0ggaAewjHMVeB4mO1molJl6uV6iA9JADy6A==",
   "success": true,
   "projectFilePath": "B:\\VSProjects\\YukiDNS\\YukiDNS.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\kaosu\\.nuget\\packages\\portable.bouncycastle\\1.8.10\\portable.bouncycastle.1.8.10.nupkg.sha512"
+    "C:\\Users\\kaosu\\.nuget\\packages\\portable.bouncycastle\\1.8.10\\portable.bouncycastle.1.8.10.nupkg.sha512",
+    "C:\\Users\\kaosu\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\5.0.3\\microsoft.netcore.app.host.win-x64.5.0.3.nupkg.sha512"
   ],
   "logs": []
 }
