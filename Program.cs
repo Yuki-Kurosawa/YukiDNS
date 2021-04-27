@@ -1,4 +1,5 @@
 ﻿using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Pkcs;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto.Operators;
 using Org.BouncyCastle.Math;
@@ -15,7 +16,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using YukiDNS.DNS_CORE;
 
@@ -95,7 +95,20 @@ namespace YukiDNS
                     store.Save(fs, "".ToCharArray(), random); //保存  
                 };
 
-                Pkcs10CertificationRequest request = new Pkcs10CertificationRequest("sha256withRSA", new X509Name("CN=TEST ROOT CA"), key.Public, null, key.Private);
+                X509ExtensionsGenerator sg = new X509ExtensionsGenerator();
+                GeneralNames gns = new GeneralNames(new GeneralName[] {
+                    new GeneralName(GeneralName.DnsName,"www.test.root"),
+                    new GeneralName(GeneralName.DnsName,"test.root"),
+                    new GeneralName(GeneralName.IPAddress,"127.0.0.1"),
+                    new GeneralName(GeneralName.IPAddress,"::1"),
+                    new GeneralName(GeneralName.Rfc822Name,"admin@test.root"),
+                    new GeneralName(GeneralName.Rfc822Name,"www@test.root"),
+                });
+                sg.AddExtension(X509Extensions.SubjectAlternativeName, false, gns.ToAsn1Object());
+                X509Extensions sans =sg.Generate();
+                Asn1Set asn1 = new DerSet(new AttributeX509(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(sans)));
+
+                Pkcs10CertificationRequest request = new Pkcs10CertificationRequest("sha256withRSA", new X509Name("CN=TEST ROOT CA"), key.Public, asn1, key.Private);
                 StringBuilder pb3 = new StringBuilder();
                 PemWriter pw3 = new PemWriter(new StringWriter(pb3));
                 pw3.WriteObject(request);
