@@ -26,14 +26,15 @@ namespace YukiDNS
 
         static void Main(string[] args)
         {
-            if (args[0] == "dns") {
+            if (args[0] == "dns")
+            {
                 DNSService.Start();
             }
             else if (args[0] == "zone")
             {
                 string[] data = File.ReadAllLines(@"test.zone");
 
-                foreach(string line in data)
+                foreach (string line in data)
                 {
                     Console.WriteLine(line);
                 }
@@ -93,6 +94,14 @@ namespace YukiDNS
                 {
                     store.Save(fs, "".ToCharArray(), random); //保存  
                 };
+
+                Pkcs10CertificationRequest request = new Pkcs10CertificationRequest("sha256withRSA", new X509Name("CN=TEST ROOT CA"), key.Public, null, key.Private);
+                StringBuilder pb3 = new StringBuilder();
+                PemWriter pw3 = new PemWriter(new StringWriter(pb3));
+                pw3.WriteObject(request);
+                string ca3 = pb3.ToString();
+                File.WriteAllText("1.ca.csr", ca3);
+
                 #endregion
 
                 #region DO SUB CA
@@ -129,7 +138,7 @@ namespace YukiDNS
                 PemWriter subpw = new PemWriter(new StringWriter(subpb));
                 subpw.WriteObject(subcert);
                 string subca = subpb.ToString();
-                File.WriteAllText("1.sub.cer", subca+ca);
+                File.WriteAllText("1.sub.cer", subca + ca);
                 #endregion
 
                 #region DO SUB SUB CA
@@ -206,6 +215,7 @@ namespace YukiDNS
                 File.WriteAllText("1.user.cer", subsubsubca + subsubca + subca + ca);
 
                 #endregion
+            
             }
         }       
     }
