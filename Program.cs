@@ -74,6 +74,12 @@ namespace YukiDNS
                 pw.WriteObject(cert);
                 string ca = pb.ToString();
                 File.WriteAllText("1.ca.cer", ca);
+
+                StringBuilder pb2 = new StringBuilder();
+                PemWriter pw2 = new PemWriter(new StringWriter(pb2));
+                pw2.WriteObject(key.Private);
+                string ca2 = pb2.ToString();
+                File.WriteAllText("1.ca.pem", ca2);
                 #endregion
 
                 #region DO SUB CA
