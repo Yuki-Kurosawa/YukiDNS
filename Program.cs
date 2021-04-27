@@ -3,6 +3,7 @@ using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto.Operators;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.OpenSsl;
+using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using Org.BouncyCastle.X509.Extension;
@@ -80,6 +81,18 @@ namespace YukiDNS
                 pw2.WriteObject(key.Private);
                 string ca2 = pb2.ToString();
                 File.WriteAllText("1.ca.pem", ca2);
+
+                var certEntry = new X509CertificateEntry(cert);
+                var store = new Pkcs12StoreBuilder().Build();
+                store.SetCertificateEntry("CERT", certEntry);   //设置证书  
+                var chain = new X509CertificateEntry[1];
+                chain[0] = certEntry;
+                store.SetKeyEntry("CERT", new AsymmetricKeyEntry(key.Private), chain);   //设置私钥  
+                SecureRandom random = new SecureRandom();
+                using (var fs = File.Create("1.ca.pfx"))
+                {
+                    store.Save(fs, "".ToCharArray(), random); //保存  
+                };
                 #endregion
 
                 #region DO SUB CA
