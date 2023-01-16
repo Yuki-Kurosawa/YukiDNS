@@ -1,23 +1,27 @@
 {
   "version": 3,
   "targets": {
-    "net5.0": {
-      "Portable.BouncyCastle/1.8.10": {
+    "net6.0": {
+      "Portable.BouncyCastle/1.9.0": {
         "type": "package",
         "compile": {
-          "lib/netstandard2.0/BouncyCastle.Crypto.dll": {}
+          "lib/netstandard2.0/BouncyCastle.Crypto.dll": {
+            "related": ".xml"
+          }
         },
         "runtime": {
-          "lib/netstandard2.0/BouncyCastle.Crypto.dll": {}
+          "lib/netstandard2.0/BouncyCastle.Crypto.dll": {
+            "related": ".xml"
+          }
         }
       }
     }
   },
   "libraries": {
-    "Portable.BouncyCastle/1.8.10": {
-      "sha512": "XLhjNAwuVB9ynwn11l5K44eyozh8q6gFseTrlnLNttejimglX7+F9+vxh60LPjvA/DAt6fUdS43N3ah8K6eaWg==",
+    "Portable.BouncyCastle/1.9.0": {
+      "sha512": "eZZBCABzVOek+id9Xy04HhmgykF0wZg9wpByzrWN7q8qEI0Qen9b7tfd7w8VA3dOeesumMG7C5ZPy0jk7PSRHw==",
       "type": "package",
-      "path": "portable.bouncycastle/1.8.10",
+      "path": "portable.bouncycastle/1.9.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -25,55 +29,50 @@
         "lib/net40/BouncyCastle.Crypto.xml",
         "lib/netstandard2.0/BouncyCastle.Crypto.dll",
         "lib/netstandard2.0/BouncyCastle.Crypto.xml",
-        "portable.bouncycastle.1.8.10.nupkg.sha512",
+        "portable.bouncycastle.1.9.0.nupkg.sha512",
         "portable.bouncycastle.nuspec"
       ]
     }
   },
   "projectFileDependencyGroups": {
-    "net5.0": [
-      "Portable.BouncyCastle >= 1.8.10"
+    "net6.0": [
+      "Portable.BouncyCastle >= 1.9.0"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\kaosu\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {},
-    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
+    "C:\\Users\\Yuki\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "B:\\VSProjects\\YukiDNS\\YukiDNS.csproj",
+      "projectUniqueName": "D:\\Github\\YukiDNS\\YukiDNS.csproj",
       "projectName": "YukiDNS",
-      "projectPath": "B:\\VSProjects\\YukiDNS\\YukiDNS.csproj",
-      "packagesPath": "C:\\Users\\kaosu\\.nuget\\packages\\",
-      "outputPath": "B:\\VSProjects\\YukiDNS\\obj\\",
+      "projectPath": "D:\\Github\\YukiDNS\\YukiDNS.csproj",
+      "packagesPath": "C:\\Users\\Yuki\\.nuget\\packages\\",
+      "outputPath": "D:\\Github\\YukiDNS\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
-        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\kaosu\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Yuki\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 18.1.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 19.2.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
-        "net5.0"
+        "net6.0"
       ],
       "sources": {
-        "B:\\NuGet": {},
-        "B:\\Repo\\NHIS5\\HIS5.0\\His.Lib\\LibCEF_49.0.1": {},
         "C:\\Program Files (x86)\\DevExpress 18.1\\Components\\System\\Components\\Packages": {},
-        "C:\\Program Files (x86)\\DevExpress 19.2\\Components\\System\\Components\\Packages": {},
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
-        "net5.0": {
-          "targetAlias": "net5.0",
+        "net6.0": {
+          "targetAlias": "net6.0",
           "projectReferences": {}
         }
       },
@@ -84,12 +83,12 @@
       }
     },
     "frameworks": {
-      "net5.0": {
-        "targetAlias": "net5.0",
+      "net6.0": {
+        "targetAlias": "net6.0",
         "dependencies": {
           "Portable.BouncyCastle": {
             "target": "Package",
-            "version": "[1.8.10, )"
+            "version": "[1.9.0, )"
           }
         },
         "imports": [
@@ -98,16 +97,35 @@
           "net47",
           "net471",
           "net472",
-          "net48"
+          "net48",
+          "net481"
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[6.0.11, 6.0.11]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Host.win-x64",
+            "version": "[6.0.11, 6.0.11]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Ref",
+            "version": "[6.0.11, 6.0.11]"
+          },
+          {
+            "name": "Microsoft.WindowsDesktop.App.Ref",
+            "version": "[6.0.11, 6.0.11]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\6.0.100-preview.3.21202.5\\RuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.100\\RuntimeIdentifierGraph.json"
       }
     }
   }
