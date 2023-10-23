@@ -1,14 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "+g34eac75sVL129Y/gVtHrZdV6bF3JGda/TxZipZzv4a+ccLlmlieyLz+aHJuZuewLDZ01HxVePHrhMIsmcjeQ==",
+  "dgSpecHash": "mwLxLmCTX3mY1Ea83CXtHQSbz2M6kMCjehq/LmhSD7fcjaU64wu36+SdbsRi3kVmNly/FeKl4zlv/ssbuScjpw==",
   "success": true,
   "projectFilePath": "D:\\Github\\YukiDNS\\YukiDNS.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\Yuki\\.nuget\\packages\\portable.bouncycastle\\1.9.0\\portable.bouncycastle.1.9.0.nupkg.sha512",
-    "C:\\Users\\Yuki\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\6.0.11\\microsoft.windowsdesktop.app.ref.6.0.11.nupkg.sha512",
-    "C:\\Users\\Yuki\\.nuget\\packages\\microsoft.netcore.app.ref\\6.0.11\\microsoft.netcore.app.ref.6.0.11.nupkg.sha512",
-    "C:\\Users\\Yuki\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\6.0.11\\microsoft.aspnetcore.app.ref.6.0.11.nupkg.sha512",
-    "C:\\Users\\Yuki\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\6.0.11\\microsoft.netcore.app.host.win-x64.6.0.11.nupkg.sha512"
+    "C:\\Users\\Yuki\\.nuget\\packages\\portable.bouncycastle\\1.9.0\\portable.bouncycastle.1.9.0.nupkg.sha512"
   ],
   "logs": []
 }
