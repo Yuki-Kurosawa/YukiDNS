@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34205.153
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YukiDNS", "YukiDNS.csproj", "{88741E0D-AE01-4A85-BC12-91C5A6EB40A3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{88741E0D-AE01-4A85-BC12-91C5A6EB40A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88741E0D-AE01-4A85-BC12-91C5A6EB40A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88741E0D-AE01-4A85-BC12-91C5A6EB40A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88741E0D-AE01-4A85-BC12-91C5A6EB40A3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1B7AC34E-20B4-4D69-9448-A038FD1ED9A3}
+	EndGlobalSection
+EndGlobal
