@@ -2,13 +2,14 @@
   "profiles": {
     "YukiDNS": {
       "commandName": "Project",
-      "commandLineArgs": "dns"
+      "commandLineArgs": "dns",
+      "remoteDebugEnabled": false
     },
     "WSL": {
       "commandName": "WSL2",
-      "distributionName": "ubuntu-22.04",
+      "executablePath": "dotnet",
       "commandLineArgs": "\"{OutDir}/YukiDNS.dll\" dns",
-      "executablePath": "dotnet"
+      "distributionName": "ubuntu-22.04"
     }
   }
 }

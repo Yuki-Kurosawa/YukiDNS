@@ -35,7 +35,7 @@ namespace YukiDNS.DNS_CORE
                 var req = new byte[1000];
 
                 var str = ret.GetStream();
-                int size=str.Read(req,0,1000);
+                int size = str.Read(req, 0, 1000);
 
                 req = req.Take(size).ToArray();
 
@@ -71,7 +71,7 @@ namespace YukiDNS.DNS_CORE
                 var dns = ParseDNSRequest(req);
 
                 var dret = Resolve(dns);
-                
+
                 byte[] buf = dret.To();
                 udp.Send(buf, buf.Length, ret.RemoteEndPoint);
             }
@@ -82,6 +82,9 @@ namespace YukiDNS.DNS_CORE
             DNSRequest dret = dns.Copy();
             dret.IsResponse = true;
             dret.Addtional = 0;
+            //dret.Authed=true;
+            dret.IsAuthority = true;
+            dret.Z = false;
 
             if (dret.RRQueries[0].Type == QTYPES.A)
             {
