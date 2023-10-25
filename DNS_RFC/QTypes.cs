@@ -19,6 +19,7 @@ namespace YukiDNS.DNS_RFC
         SPF = 99,
         SRV = 33,
         TXT = 16,
+        OPT = 41
 
     }
 }

@@ -21,7 +21,7 @@ namespace YukiDNS.DNS_RFC
             int i = 0;
             for (; i < RR.Length; i++)
             {
-                if (RR[i] == 0) break;
+                if (RR[i] == 0) { Name = ""; break; }
                 Name += (char)RR[i];
             }
 

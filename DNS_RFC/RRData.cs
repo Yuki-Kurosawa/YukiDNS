@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Net;
+using Newtonsoft.Json;
 
 namespace YukiDNS.DNS_RFC
 {
@@ -486,6 +487,26 @@ namespace YukiDNS.DNS_RFC
             return ret;
         }
 
+
+        public static RRData ParseRequest(byte[] RR)
+        {
+            RRData ret = new RRData();
+            ret.byteData = RR;
+            int i = 0;
+            for (; i < RR.Length; i++)
+            {
+                if (RR[i] == 0) { ret.Name = ""; break; }
+                ret.Name += (char)RR[i];
+            }
+
+            ret.Name = ret.Name.FromDNSName();
+
+            ret.Type = (QTYPES)(RR[i + 1] * 0x100 + RR[i + 2]);
+            ret.Class = (RRClass)(RR[i + 3] * 0x100 + RR[i + 4]);
+            ret.RDLength = (ushort)(RR[i + 5] * 0x100 + RR[i + 6]);
+            ret.RDData=RR.Skip(i + 6).ToArray();
+            return ret;
+        }
     }
 
 }

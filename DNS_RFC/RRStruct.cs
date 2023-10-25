@@ -20,7 +20,7 @@ namespace YukiDNS.DNS_RFC
             int i = 0;
             for (; i < RR.Length; i++)
             {
-                if (RR[i] == 0) break;
+                if (RR[i] == 0) { Name = ""; break; }
                 Name += (char)RR[i];
             }
 
@@ -29,8 +29,8 @@ namespace YukiDNS.DNS_RFC
             Type = (QTYPES)(RR[i + 1] * 0x100 + RR[i + 2]);
             Class = (RRClass)(RR[i + 3] * 0x100 + RR[i + 4]);
 
-            byte[] data = RR.Take(i + 5).ToArray();
-            byteData = data;
+            byte[] RDData=Type== QTYPES.OPT?RR.ToArray():RR.Take(i + 5).ToArray();
+            byteData = RDData;
         }
     }
 }

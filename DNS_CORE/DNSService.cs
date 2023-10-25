@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -267,11 +268,11 @@ namespace YukiDNS.DNS_CORE
         private static DNSRequest ParseDNSRequest(byte[] req)
         {
             DNSRequest dns = DNSRequest.From(req);
-            /*txtLog.Text += dns.TransactionID.ToString() + " " + (dns.IsResponse ? "RESP" : "REQ") + " " + dns.OpCode.ToString() +
+            Console.WriteLine(dns.TransactionID.ToString() + " " + (dns.IsResponse ? "RESP" : "REQ") + " " + dns.OpCode.ToString() +
                 " " + dns.Query.ToString() + " " + dns.Answer.ToString() + " " + dns.Authority.ToString() + " " + dns.Addtional.ToString() +
-                "\r\n" + dns.RRQueries[0].Name + " " + dns.RRQueries[0].Type + " " + dns.RRQueries[0].Class+"\r\n";
-            txtLog.Text += "===================\r\n"+ JsonConvert.SerializeObject(dns)+"\r\n===================\r\n";
-            txtLog.SelectionStart = txtLog.TextLength;
+                "\r\n" + dns.RRQueries[0].Name + " " + dns.RRQueries[0].Type + " " + dns.RRQueries[0].Class + "\r\n");
+            Console.WriteLine( "===================\r\n"+ JsonConvert.SerializeObject(dns)+"\r\n===================\r\n");
+            /*txtLog.SelectionStart = txtLog.TextLength;
             txtLog.ScrollToCaret();*/
             return dns;
         }

@@ -101,14 +101,18 @@ namespace YukiDNS.DNS_RFC
             #endregion
 
             //DO RR DATAS
+            ParseRR(1,ref ret, ref data);
+            ParseRR(2,ref ret, ref data);
+            ParseRR(3,ref ret, ref data);
+            ParseRR(4,ref ret, ref data);
 
-            ParseRR(ref ret, ref data);
 
             return ret;
         }
 
-        private static void ParseRR(ref DNSRequest ret, ref byte[] data)
+        private static void ParseRR(int RRSection,ref DNSRequest ret, ref byte[] data)
         {
+            if(RRSection==1)
             {
                 List<RRQuery> rs = new List<RRQuery>();
                 for (int i = 0; i < ret.Query; i++)
@@ -119,17 +123,39 @@ namespace YukiDNS.DNS_RFC
                 }
                 ret.RRQueries = rs.ToArray();
             }
-
-            /*{
-                List<RRAuthority> rs = new List<RRAuthority>();
+            else if (RRSection == 2)
+            {
+                List<RRData> rs = new List<RRData>();
+                for (int i = 0; i < ret.Answer; i++)
+                {
+                    RRStruct rr = new RRStruct(data);
+                    rs.Add(RRData.ParseRequest(rr.byteData));
+                    data = new List<byte>(data.Skip(rr.byteData.Length)).ToArray();
+                }
+                ret.RRAnswer = rs.ToArray();
+            }
+            else if (RRSection == 3)
+            {
+                List<RRData> rs = new List<RRData>();
                 for (int i = 0; i < ret.Authority; i++)
                 {
-                    RRData rr = new RRData(data);
-                    rs.Add(new RRAuthority(rr.byteData));
+                    RRStruct rr = new RRStruct(data);
+                    rs.Add(RRData.ParseRequest(rr.byteData));
                     data = new List<byte>(data.Skip(rr.byteData.Length)).ToArray();
                 }
                 ret.RRAuthority = rs.ToArray();
-            }*/
+            }
+            else if(RRSection==4)
+            {
+                List<RRData> rs = new List<RRData>();
+                for (int i = 0; i < ret.Addtional; i++)
+                {
+                    RRStruct rr = new RRStruct(data);
+                    rs.Add(RRData.ParseRequest(rr.byteData));
+                    data = new List<byte>(data.Skip(rr.byteData.Length)).ToArray();
+                }
+                ret.RRAdditional = rs.ToArray();
+            }
         }
 
         public byte[] To()
