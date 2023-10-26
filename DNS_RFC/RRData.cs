@@ -17,7 +17,9 @@ namespace YukiDNS.DNS_RFC
 
         public RRClass Class { get; private set; }
 
-        public ushort TTL { get; private set; }
+        public uint TTL { get; private set; }
+
+        public RROPTData OPTData { get; private set; }
 
         public ushort RDLength { get; private set; }
 
@@ -487,6 +489,38 @@ namespace YukiDNS.DNS_RFC
             return ret;
         }
 
+        public static RRData BuildResponse_OPT(byte[] RR,uint TTL)
+        {
+            RRData ret = new RRData();
+            ret.byteData = RR;
+
+            int i = 0;
+            for (; i < RR.Length; i++)
+            {
+                if (RR[i] == 0) { ret.Name = ""; break; }
+                ret.Name += (char)RR[i];
+            }
+
+            ret.Name = ret.Name.FromDNSName();
+
+            ret.Type = (QTYPES)(RR[i + 1] * 0x100 + RR[i + 2]);
+            ret.Class = (RRClass)(RR[i + 3] * 0x100 + RR[i + 4]);
+
+            //REMOVE OTHER DATAS
+            ret.byteData = RR.Take(i + 5).ToArray();
+
+            //TTL
+            ret.byteData = ret.byteData.Append((byte)(TTL / 16777216)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 16777216 / 65536)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 65536 / 256)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 256)).ToArray();
+
+            //RDLENGTH=
+            ret.byteData = ret.byteData.Append((byte)0).ToArray();
+            ret.byteData = ret.byteData.Append((byte)0).ToArray();
+
+            return ret;
+        }
 
         public static RRData ParseRequest(byte[] RR)
         {
@@ -503,11 +537,43 @@ namespace YukiDNS.DNS_RFC
 
             ret.Type = (QTYPES)(RR[i + 1] * 0x100 + RR[i + 2]);
             ret.Class = (RRClass)(RR[i + 3] * 0x100 + RR[i + 4]);
-            ret.RDLength = (ushort)(RR[i + 5] * 0x100 + RR[i + 6]);
-            ret.RDData=RR.Skip(i + 6).ToArray();
+            ret.TTL = (uint)(RR[i + 5] * 0x1000000 + RR[i + 6]*0x10000 + RR[i + 7] * 0x100 + RR[i + 8]);
+            ret.RDLength = (ushort)(RR[i + 9] * 0x100 + RR[i + 10]);
+            ret.RDData=RR.Skip(i + 11).ToArray();
+
+            if(ret.Type!=QTYPES.OPT)
+            {
+                ret.OPTData = null;
+            }
+            else
+            {
+                ret.OPTData = ParseOPTData(ret.TTL);
+            }
+
+            Console.WriteLine(JsonConvert.SerializeObject(ret.RDLength));
+            Console.WriteLine(JsonConvert.SerializeObject(ret.RDData));
+            Console.WriteLine(JsonConvert.SerializeObject(ret.OPTData));
             return ret;
+        }
+
+        private static RROPTData ParseOPTData(uint TTL)
+        {
+            RROPTData opt = new RROPTData();
+            opt.RCODE = (ushort)(TTL / 0x1000000u);
+            opt.VERSION = (ushort)(TTL % 0x1000000u / 0x10000u);
+            opt.DO = TTL / 0x10000u % 0x80u == 1;
+            opt.Z = (ushort)(TTL % 0x80u);
+            return opt;
         }
     }
 
+    public class RROPTData
+    {
+        public ushort RCODE { get; set; }
+        public ushort VERSION { get; set; }
+        public bool DO { get; set; }
+        public ushort Z { get; set; }
+
+    }
 }
 

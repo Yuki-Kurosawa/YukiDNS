@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Net;
@@ -86,6 +87,35 @@ namespace YukiDNS.DNS_CORE
             //dret.Authed=true;
             dret.IsAuthority = true;
             dret.Z = false;
+
+            if (dns.Addtional > 0)
+            {
+                var opt = dns.RRAdditional[0];
+
+                if (opt.OPTData.VERSION != 0)
+                {
+                    dret.Addtional = 1;
+                    opt.OPTData.RCODE = 1;
+                    opt.OPTData.VERSION = 0;
+                    opt.OPTData.DO = false;
+                    uint TTL = opt.OPTData.RCODE * 0x1000000u + opt.OPTData.VERSION * 0x10000u + (opt.OPTData.DO ? 0x8000u : 0x0u) + opt.OPTData.Z;
+                    dret.RRAdditional = new[] {
+                        RRData.BuildResponse_OPT(dret.RRAdditional[0].byteData,TTL)
+                    };
+                    dret.Answer = 0;
+                    dret.RRAnswer = new RRData[0];
+
+                    return dret;
+
+                }
+
+                dret.Addtional = 1;
+                opt.OPTData.DO = false;
+                uint TTL1 = opt.OPTData.RCODE * 0x10000u + opt.OPTData.VERSION * 0x100u + (opt.OPTData.DO ? 0x8000u : 0x0u) + opt.OPTData.Z;
+                dret.RRAdditional = new[] {
+                    RRData.BuildResponse_OPT(dret.RRAdditional[0].byteData,TTL1)
+                };
+            }
 
             if (dret.RRQueries[0].Type == QTYPES.A)
             {
@@ -257,10 +287,17 @@ namespace YukiDNS.DNS_CORE
 
                 dret.RRAnswer = answers.ToArray();
             }
+            else if(dret.RRQueries[0].Type == QTYPES.DNSKEY)
+            {
+                dret.ReplyCode = 0;
+                dret.Answer = 0;
+            }
             else
             {
                 dret.ReplyCode = 4;
             }
+
+            
 
             return dret;
         }
