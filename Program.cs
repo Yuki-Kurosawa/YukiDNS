@@ -33,7 +33,7 @@ namespace YukiDNS
             }
             else if (args[0] == "zone")
             {
-                string[] data = File.ReadAllLines(@"e1_ksyuki_com.zone");
+                string[] data = File.ReadAllLines(@"test_com.zone");
 
                 foreach (string line in data)
                 {

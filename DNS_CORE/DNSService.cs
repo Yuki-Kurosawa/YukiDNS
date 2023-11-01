@@ -12,6 +12,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using YukiDNS.DNS_RFC;
+using System.IO;
+using System.Xml.Linq;
 
 namespace YukiDNS.DNS_CORE
 {
@@ -19,11 +21,41 @@ namespace YukiDNS.DNS_CORE
     {
         public static void Start()
         {
+            LoadZoneFiles();
+
             Thread dns = new Thread(DNS_THREAD_UDP);
             dns.Start();
 
             Thread dnstcp = new Thread(DNS_THREAD_TCP);
             dnstcp.Start();
+        }
+
+        static List<ZoneArea> zones = new List<ZoneArea>();
+
+        public static void LoadZoneFiles()
+        {
+            string basePath = "zones";
+            string[] fs=Directory.GetFiles(basePath);
+
+            foreach (string file in fs)
+            {
+                string fn=new FileInfo(file).Name.Replace(".zone","").Replace("_",".");
+                ZoneArea zone = new ZoneArea(fn);
+                string[] lines=File.ReadAllLines(file);
+
+                foreach (string line in lines)
+                {
+                    try
+                    {
+                        ZoneData data = ZoneParser.ParseLine(line);
+                        zone.Data.Add(data);
+                    }
+                    catch
+                    {
+                    }
+                }
+                zones.Add(zone);
+            }
         }
 
         private static void DNS_THREAD_TCP()
@@ -87,6 +119,39 @@ namespace YukiDNS.DNS_CORE
             //dret.Authed=true;
             dret.IsAuthority = true;
             dret.Z = false;
+
+
+
+            ZoneArea selected = null;
+            string Name = "";         
+
+            { 
+                byte[] RR = dns.RRQueries[0].byteData;
+                int i = 0;
+                for (; i < RR.Length; i++)
+                {
+                    if (RR[i] == 0) { break; }
+                    Name += (char)RR[i];
+                }
+            }
+            Name = Name.FromDNSName();
+
+            string zoneName = Name+".";
+
+            while(selected == null && !string.IsNullOrEmpty(zoneName))
+            {
+                Console.WriteLine(zoneName);
+                var zone = zones.Where(k => k.Name == zoneName.TrimEnd('.')).ToList();
+                if(zone.Count>0)
+                {
+                    selected = zone[0];
+                }
+                else
+                {
+                    int len = zoneName.Length - zoneName.IndexOf(".") - 1;
+                    zoneName = zoneName.Substring(zoneName.IndexOf(".") + 1, len);
+                }
+            }
 
             if (dns.Addtional > 0)
             {
