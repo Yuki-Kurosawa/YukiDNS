@@ -140,7 +140,6 @@ namespace YukiDNS.DNS_CORE
 
             while(selected == null && !string.IsNullOrEmpty(zoneName))
             {
-                Console.WriteLine(zoneName);
                 var zone = zones.Where(k => k.Name == zoneName.TrimEnd('.')).ToList();
                 if(zone.Count>0)
                 {
@@ -182,197 +181,221 @@ namespace YukiDNS.DNS_CORE
                 };
             }
 
-            if (dret.RRQueries[0].Type == QTYPES.A)
+            if(selected==null)
             {
-                dret.ReplyCode = 0;
-                dret.Answer = 1;
-                List<RRData> answers = new List<RRData>();
-
-                for (var i = 1; i <= dret.Answer; i++)
-                {
-                    var a = RRData.BuildResponse_A(dret.RRQueries[0].byteData, 1, 4, "127.0.0." + i.ToString());
-                    answers.Add(a);
-                }
-
-                dret.RRAnswer = answers.ToArray();
-
-            }
-            else if (dret.RRQueries[0].Type == QTYPES.AAAA)
-            {
-                dret.ReplyCode = 0;
-                dret.Answer = 1;
-                List<RRData> answers = new List<RRData>();
-
-                for (var i = 1; i <= dret.Answer; i++)
-                {
-                    var a = RRData.BuildResponse_AAAA(dret.RRQueries[0].byteData, 1, 16, "::1");
-                    answers.Add(a);
-                }
-
-                dret.RRAnswer = answers.ToArray();
-
-            }
-            else if (dret.RRQueries[0].Type == QTYPES.PTR)
-            {
-                dret.ReplyCode = 0;
-                dret.Answer = 1;
-                List<RRData> answers = new List<RRData>();
-
-                for (var i = 1; i <= dret.Answer; i++)
-                {
-                    string ptr = "ptr.test.com".ToDNSName();
-                    var a = RRData.BuildResponse_PTR(dret.RRQueries[0].byteData, 1, (ushort)ptr.Length, ptr);
-                    answers.Add(a);
-                }
-
-                dret.RRAnswer = answers.ToArray();
-            }
-            else if (dret.RRQueries[0].Type == QTYPES.CNAME)
-            {
-                dret.ReplyCode = 0;
-                dret.Answer = 1;
-                List<RRData> answers = new List<RRData>();
-
-                for (var i = 1; i <= dret.Answer; i++)
-                {
-                    string ptr = "ptr.test.com".ToDNSName();
-                    var a = RRData.BuildResponse_CNAME(dret.RRQueries[0].byteData, 1, (ushort)ptr.Length, ptr);
-                    answers.Add(a);
-                }
-
-                dret.RRAnswer = answers.ToArray();
-            }
-            else if (dret.RRQueries[0].Type == QTYPES.NS)
-            {
-                dret.ReplyCode = 0;
-                dret.Answer = 2;
-                List<RRData> answers = new List<RRData>();
-
-                for (var i = 1; i <= dret.Answer; i++)
-                {
-                    string ptr = $@"ns{i}.test.com".ToDNSName();
-                    var a = RRData.BuildResponse_NS(dret.RRQueries[0].byteData, 1, (ushort)ptr.Length, ptr);
-                    answers.Add(a);
-                }
-
-                dret.RRAnswer = answers.ToArray();
-            }
-            else if (dret.RRQueries[0].Type == QTYPES.MX)
-            {
-                dret.ReplyCode = 0;
-                dret.Answer = 2;
-                List<RRData> answers = new List<RRData>();
-
-                for (var i = 1; i <= dret.Answer; i++)
-                {
-                    string ptr = $@"mx{i}.test.com".ToDNSName();
-                    var a = RRData.BuildResponse_MX(dret.RRQueries[0].byteData, 1, (ushort)(ptr.Length + 2), (ushort)i, ptr);
-                    answers.Add(a);
-                }
-
-                dret.RRAnswer = answers.ToArray();
-            }
-            else if (dret.RRQueries[0].Type == QTYPES.TXT)
-            {
-                dret.ReplyCode = 0;
-                dret.Answer = 1;
-                List<RRData> answers = new List<RRData>();
-
-                for (var i = 1; i <= dret.Answer; i++)
-                {
-                    string ptr = $@"TXT: HELLO WORLD! FROM DNS";
-                    var a = RRData.BuildResponse_TXT(dret.RRQueries[0].byteData, 1, (ushort)(ptr.Length + 1), (ushort)ptr.Length, ptr);
-                    answers.Add(a);
-                }
-
-                dret.RRAnswer = answers.ToArray();
-            }
-            else if (dret.RRQueries[0].Type == QTYPES.SPF)
-            {
-                dret.ReplyCode = 0;
-                dret.Answer = 1;
-                List<RRData> answers = new List<RRData>();
-
-                for (var i = 1; i <= dret.Answer; i++)
-                {
-                    string ptr = $@"SPF: HELLO WORLD! FROM DNS";
-                    var a = RRData.BuildResponse_SPF(dret.RRQueries[0].byteData, 1, (ushort)(ptr.Length + 1), (ushort)ptr.Length, ptr);
-                    answers.Add(a);
-                }
-
-                dret.RRAnswer = answers.ToArray();
-            }
-            else if (dret.RRQueries[0].Type == QTYPES.SOA)
-            {
-                dret.ReplyCode = 0;
-                dret.Answer = 1;
-                List<RRData> answers = new List<RRData>();
-
-                for (var i = 1; i <= dret.Answer; i++)
-                {
-                    string zone = $@"test.com".ToDNSName();
-                    string mbox = $@"admin.test.com".ToDNSName();
-                    var a = RRData.BuildResponse_SOA(dret.RRQueries[0].byteData, 1, (ushort)(zone.Length + mbox.Length + 20),
-                        zone, mbox, 1, 2, 3, 4, 5);
-                    answers.Add(a);
-                }
-
-                dret.RRAnswer = answers.ToArray();
-            }
-            else if (dret.RRQueries[0].Type == QTYPES.SRV)
-            {
-                dret.ReplyCode = 0;
-                dret.Answer = 1;
-                List<RRData> answers = new List<RRData>();
-
-                for (var i = 1; i <= dret.Answer; i++)
-                {
-                    string zone = $@"test.com".ToDNSName();
-                    var a = RRData.BuildResponse_SRV(dret.RRQueries[0].byteData, 1, (ushort)(zone.Length + 6),
-                        1, 2, 53, zone);
-                    answers.Add(a);
-                }
-
-                dret.RRAnswer = answers.ToArray();
-            }
-            else if (dret.RRQueries[0].Type == QTYPES.CAA)
-            {
-                dret.ReplyCode = 0;
-                dret.Answer = 1;
-                List<RRData> answers = new List<RRData>();
-
-                for (var i = 1; i <= dret.Answer; i++)
-                {
-                    string zone = $@"test.com";
-                    string tag = "issue";
-                    var a = RRData.BuildResponse_CAA(dret.RRQueries[0].byteData, 1, (ushort)(zone.Length + tag.Length + 2),
-                        0, (ushort)tag.Length, tag, zone);
-                    answers.Add(a);
-                }
-
-                dret.RRAnswer = answers.ToArray();
-            }
-            else if(dret.RRQueries[0].Type == QTYPES.DNSKEY)
-            {
-                dret.ReplyCode = 0;
+                dret.ReplyCode = (ushort)ReplyCode.NXDOMAIN;
                 dret.Answer = 0;
-            }
-            else
-            {
-                dret.ReplyCode = 4;
+                return dret;
             }
 
+            bool exact = selected.Name == Name.TrimEnd('.');
+            bool any = false;
+            string[] qs = selected.Name == Name.TrimEnd('.') ? new[] { "@" } : new[] { Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1), "*" };
+
+            foreach(string s in qs)
+            {
+                if (s == "*") any = true;
+                List<ZoneData> zds = new List<ZoneData>();
+
+                if (exact)
+                {
+                    zds = selected.Data.Where(data => data.Type == dret.RRQueries[0].Type && data.Name == "@").ToList();
+                }
+                else if(!any)
+                {
+                    zds = selected.Data.Where(data => data.Type == dret.RRQueries[0].Type && data.Name == s).ToList();
+                }
+                else
+                {
+                    zds = selected.Data.Where(data => data.Type == dret.RRQueries[0].Type && data.Name == "*").ToList();
+                }
+
+                if (zds.Any())
+                {
+                    try
+                    {
+                        List<RRData> answers = BuildResponse(dret.RRQueries[0], zds);
+                        if (answers.Any())
+                        {
+                            dret.Answer = (ushort)answers.Count;
+                            dret.RRAnswer = answers.ToArray();
+                        }
+                    }
+                    catch
+                    {
+                        dret.ReplyCode = (ushort)ReplyCode.NOTIMP;
+                    }
+                    break;
+                }
+            }
+
+            if(dret.Answer == 0 && dret.ReplyCode==(ushort)ReplyCode.NOERROR) {
+                dret.ReplyCode = (ushort)ReplyCode.NXDOMAIN;
+            }
             
 
             return dret;
         }
 
+        private static List<RRData> BuildResponse(RRQuery query, List<ZoneData> zds)
+        {
+            List<RRData> answers = new List<RRData>();
+            if (query.Type == QTYPES.A)
+            {
+
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    var a = RRData.BuildResponse_A(query.byteData, 1, 4, zds[i-1].Data[0].ToString());
+                    answers.Add(a);
+                }
+
+            }
+            else if (query.Type == QTYPES.AAAA)
+            {
+
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    var a = RRData.BuildResponse_AAAA(query.byteData, 1, 16, zds[i - 1].Data[0].ToString());
+                    answers.Add(a);
+                }
+
+            }
+            else if (query.Type == QTYPES.PTR)
+            {
+
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    string ptr = zds[i - 1].Data[0].ToString().ToDNSName();
+                    var a = RRData.BuildResponse_PTR(query.byteData, 1, (ushort)ptr.Length, ptr);
+                    answers.Add(a);
+                }
+
+            }
+            else if (query.Type == QTYPES.CNAME)
+            {
+
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    string ptr = zds[i - 1].Data[0].ToString().ToDNSName();
+                    var a = RRData.BuildResponse_CNAME(query.byteData, 1, (ushort)ptr.Length, ptr);
+                    answers.Add(a);
+                }
+
+            }
+            else if (query.Type == QTYPES.NS)
+            {
+
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    string ptr = zds[i - 1].Data[0].ToString().ToDNSName();
+                    var a = RRData.BuildResponse_NS(query.byteData, 1, (ushort)ptr.Length, ptr);
+                    answers.Add(a);
+                }
+
+            }
+            else if (query.Type == QTYPES.MX)
+            {
+
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    string ptr = $@"mx{i}.test.com".ToDNSName();
+                    var a = RRData.BuildResponse_MX(query.byteData, 1, (ushort)(ptr.Length + 2), (ushort)i, ptr);
+                    answers.Add(a);
+                }
+
+            }
+            else if (query.Type == QTYPES.TXT)
+            {
+
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    string ptr = zds[i - 1].Data[0].ToString();
+                    var a = RRData.BuildResponse_TXT(query.byteData, 1, (ushort)(ptr.Length + 1), (ushort)ptr.Length, ptr);
+                    answers.Add(a);
+                }
+
+            }
+            else if (query.Type == QTYPES.SPF)
+            {
+
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    string ptr = zds[i - 1].Data[0].ToString();
+                    var a = RRData.BuildResponse_SPF(query.byteData, 1, (ushort)(ptr.Length + 1), (ushort)ptr.Length, ptr);
+                    answers.Add(a);
+                }
+
+            }
+            else if (query.Type == QTYPES.SOA)
+            {
+
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    string zone = $@"test.com".ToDNSName();
+                    string mbox = $@"admin.test.com".ToDNSName();
+                    var a = RRData.BuildResponse_SOA(query.byteData, 1, (ushort)(zone.Length + mbox.Length + 20),
+                        zone, mbox, 1, 2, 3, 4, 5);
+                    answers.Add(a);
+                }
+
+            }
+            else if (query.Type == QTYPES.SRV)
+            {
+
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    string zone = $@"test.com".ToDNSName();
+                    var a = RRData.BuildResponse_SRV(query.byteData, 1, (ushort)(zone.Length + 6),
+                        1, 2, 53, zone);
+                    answers.Add(a);
+                }
+
+            }
+            else if (query.Type == QTYPES.CAA)
+            {
+
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    string zone = $@"test.com";
+                    string tag = "issue";
+                    var a = RRData.BuildResponse_CAA(query.byteData, 1, (ushort)(zone.Length + tag.Length + 2),
+                        0, (ushort)tag.Length, tag, zone);
+                    answers.Add(a);
+                }
+
+            }
+            else if (query.Type == QTYPES.DNSKEY)
+            {
+                
+            }
+            else
+            {
+                throw new Exception("NOTIMP");
+            }
+
+            return answers;
+        }
+
         private static DNSRequest ParseDNSRequest(byte[] req)
         {
             DNSRequest dns = DNSRequest.From(req);
+
+            string Name = "";
+
+            {
+                byte[] RR = dns.RRQueries[0].byteData;
+                int i = 0;
+                for (; i < RR.Length; i++)
+                {
+                    if (RR[i] == 0) { break; }
+                    Name += (char)RR[i];
+                }
+            }
+            Name = Name.FromDNSName();
+
             Console.WriteLine(dns.TransactionID.ToString() + " " + (dns.IsResponse ? "RESP" : "REQ") + " " + dns.OpCode.ToString() +
                 " " + dns.Query.ToString() + " " + dns.Answer.ToString() + " " + dns.Authority.ToString() + " " + dns.Addtional.ToString() +
-                "\r\n" + dns.RRQueries[0].Name + " " + dns.RRQueries[0].Type + " " + dns.RRQueries[0].Class + "\r\n");
+                "\r\n" + Name + " " + dns.RRQueries[0].Type + " " + dns.RRQueries[0].Class + "\r\n");
             Console.WriteLine( "===================\r\n"+ JsonConvert.SerializeObject(dns)+"\r\n===================\r\n");
             /*txtLog.SelectionStart = txtLog.TextLength;
             txtLog.ScrollToCaret();*/
