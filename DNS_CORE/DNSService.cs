@@ -192,6 +192,11 @@ namespace YukiDNS.DNS_CORE
             bool any = false;
             string[] qs = selected.Name == Name.TrimEnd('.') ? new[] { "@" } : new[] { Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1), "*" };
 
+            if(dret.RRQueries[0].Type==QTYPES.NS)
+            {
+                exact = true;
+            }
+
             foreach(string s in qs)
             {
                 if (s == "*") any = true;
