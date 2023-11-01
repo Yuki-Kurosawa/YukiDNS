@@ -298,8 +298,8 @@ namespace YukiDNS.DNS_CORE
 
                 for (var i = 1; i <= zds.Count; i++)
                 {
-                    string ptr = $@"mx{i}.test.com".ToDNSName();
-                    var a = RRData.BuildResponse_MX(query.byteData, 1, (ushort)(ptr.Length + 2), (ushort)i, ptr);
+                    string ptr = zds[i - 1].Data[1].ToString().ToDNSName();
+                    var a = RRData.BuildResponse_MX(query.byteData, 1, (ushort)(ptr.Length + 2), (ushort)zds[i - 1].Data[0], ptr);
                     answers.Add(a);
                 }
 
@@ -331,10 +331,10 @@ namespace YukiDNS.DNS_CORE
 
                 for (var i = 1; i <= zds.Count; i++)
                 {
-                    string zone = $@"test.com".ToDNSName();
-                    string mbox = $@"admin.test.com".ToDNSName();
+                    string zone = zds[i - 1].Data[0].ToString().ToDNSName();
+                    string mbox = zds[i - 1].Data[1].ToString().ToDNSName();
                     var a = RRData.BuildResponse_SOA(query.byteData, 1, (ushort)(zone.Length + mbox.Length + 20),
-                        zone, mbox, 1, 2, 3, 4, 5);
+                        zone, mbox, (uint)zds[i - 1].Data[2], (uint)zds[i - 1].Data[3], (uint)zds[i - 1].Data[4], (uint)zds[i - 1].Data[5], (uint)zds[i - 1].Data[6]);
                     answers.Add(a);
                 }
 
@@ -344,9 +344,9 @@ namespace YukiDNS.DNS_CORE
 
                 for (var i = 1; i <= zds.Count; i++)
                 {
-                    string zone = $@"test.com".ToDNSName();
+                    string zone = zds[i - 1].Data[3].ToString().ToDNSName();
                     var a = RRData.BuildResponse_SRV(query.byteData, 1, (ushort)(zone.Length + 6),
-                        1, 2, 53, zone);
+                       (ushort)zds[i - 1].Data[0], (ushort)zds[i - 1].Data[1], (ushort)zds[i - 1].Data[2], zone);
                     answers.Add(a);
                 }
 
@@ -356,10 +356,10 @@ namespace YukiDNS.DNS_CORE
 
                 for (var i = 1; i <= zds.Count; i++)
                 {
-                    string zone = $@"test.com";
-                    string tag = "issue";
+                    string zone = zds[i - 1].Data[2].ToString();
+                    string tag = zds[i - 1].Data[1].ToString();
                     var a = RRData.BuildResponse_CAA(query.byteData, 1, (ushort)(zone.Length + tag.Length + 2),
-                        0, (ushort)tag.Length, tag, zone);
+                        (ushort)zds[i - 1].Data[0], (ushort)tag.Length, tag, zone);
                     answers.Add(a);
                 }
 
