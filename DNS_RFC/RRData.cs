@@ -565,6 +565,8 @@ namespace YukiDNS.DNS_RFC
             opt.Z = (ushort)(TTL % 0x80u);
             return opt;
         }
+    
+
     }
 
     public class RROPTData

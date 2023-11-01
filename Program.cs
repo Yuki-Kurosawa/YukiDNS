@@ -1,4 +1,5 @@
-﻿using Org.BouncyCastle.Asn1;
+﻿using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Asn1.Pkcs;
 using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Crypto.Operators;
@@ -32,12 +33,22 @@ namespace YukiDNS
             }
             else if (args[0] == "zone")
             {
-                string[] data = File.ReadAllLines(@"test.zone");
+                string[] data = File.ReadAllLines(@"e1_ksyuki_com.zone");
 
                 foreach (string line in data)
                 {
-                    Console.WriteLine(line);
+                    try
+                    {
+                        ZoneData data1=ZoneParser.ParseLine(line);
+                        Console.WriteLine(JsonConvert.SerializeObject(data1));
+                    }
+                    catch(Exception ex)
+                    {
+                        Console.WriteLine(ex.Message+":"+line.Split(' ')[3]);
+                    }
                 }
+
+                Console.ReadLine();
             }
             else
             {
@@ -68,6 +79,16 @@ namespace YukiDNS
                 gen.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(3));
                 gen.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyEncipherment | KeyUsage.CrlSign | KeyUsage.KeyCertSign));
 
+                GeneralNames gns1 = new GeneralNames(new GeneralName[] {
+                    new GeneralName(GeneralName.DnsName,"www.test.root"),
+                    new GeneralName(GeneralName.DnsName,"test.root"),
+                    new GeneralName(GeneralName.IPAddress,"127.0.0.1"),
+                    new GeneralName(GeneralName.IPAddress,"::1"),
+                    new GeneralName(GeneralName.Rfc822Name,"admin@test.root"),
+                    new GeneralName(GeneralName.Rfc822Name,"www@test.root"),
+                });
+
+                gen.AddExtension(X509Extensions.SubjectAlternativeName, false, gns1.ToAsn1Object());
 
                 var cert = gen.Generate(asn);
 
