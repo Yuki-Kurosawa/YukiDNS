@@ -241,16 +241,20 @@ namespace YukiDNS.DNS_CORE
             }
 
             string kc = exact? Name.TrimEnd('.') : Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1);
-            int allCount = selected.Data.Where(data => data.Type != QTYPES.NS && data.Type != QTYPES.SOA && data.Name == kc).ToList().Count;
-            if(allCount==0)
-            {
-                allCount = selected.Data.Where(data => data.Type != QTYPES.NS && data.Type != QTYPES.SOA && data.Name == "*").ToList().Count;
-            }
 
-            if (allCount == 0 && dret.ReplyCode==(ushort)ReplyCode.NOERROR) {
-                dret.ReplyCode = (ushort)ReplyCode.NXDOMAIN;
+            if (!exact)
+            {
+                int allCount = selected.Data.Where(data => data.Type != QTYPES.NS && data.Type != QTYPES.SOA && data.Name == kc).ToList().Count;
+                if (allCount == 0)
+                {
+                    allCount = selected.Data.Where(data => data.Type != QTYPES.NS && data.Type != QTYPES.SOA && data.Name == "*").ToList().Count;
+                }
+
+                if (allCount == 0 && dret.ReplyCode == (ushort)ReplyCode.NOERROR)
+                {
+                    dret.ReplyCode = (ushort)ReplyCode.NXDOMAIN;
+                }
             }
-            
 
             return dret;
         }
