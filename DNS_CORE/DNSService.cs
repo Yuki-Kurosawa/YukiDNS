@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using YukiDNS.DNS_RFC;
 using System.IO;
 using System.Xml.Linq;
+using Org.BouncyCastle.Ocsp;
 
 namespace YukiDNS.DNS_CORE
 {
@@ -181,7 +182,7 @@ namespace YukiDNS.DNS_CORE
                 };
             }
 
-            if(selected==null)
+            if (selected == null)
             {
                 dret.ReplyCode = (ushort)ReplyCode.NXDOMAIN;
                 dret.Answer = 0;
@@ -254,6 +255,55 @@ namespace YukiDNS.DNS_CORE
                 {
                     dret.ReplyCode = (ushort)ReplyCode.NXDOMAIN;
                 }
+            }
+
+            //ADD SOA RR for All Records
+            var zsoas = selected.Data.Where(data => data.Type == QTYPES.SOA && data.Name == "@").ToList();
+            var nq = dret.RRQueries[0].Copy();
+            nq.Type = QTYPES.SOA;
+            byte[] bd=new byte[nq.byteData.Length];
+            nq.byteData.CopyTo(bd, 0);
+            nq.byteData = bd;
+
+            int k = 0;
+            for (; k < nq.byteData.Length; k++)
+            {
+                if (nq.byteData[k] == 0) break;
+                //ret.Name += (char)RR[i];
+            }
+
+            string rn=selected.Name;
+            List<byte> bn = new List<byte>();          
+
+            foreach(string r in rn.Split(new[] {"."},StringSplitOptions.RemoveEmptyEntries))
+            {
+                byte[] br = Encoding.ASCII.GetBytes(r);
+                bn.Add((byte)br.Length);
+                bn.AddRange(br);
+            }
+
+            var bl = nq.byteData.Skip(k).ToArray();
+            List<byte> al = new List<byte>();
+
+            al.AddRange(bn);
+            al.AddRange(bl);
+            nq.byteData = al.ToArray();
+
+            k = 0;
+            for (; k < nq.byteData.Length; k++)
+            {
+                if (nq.byteData[k] == 0) break;
+                //ret.Name += (char)RR[i];
+            }
+
+            nq.byteData[k + 1] = 0;
+            nq.byteData[k + 2] = 6;
+
+            List<RRData> soas = BuildResponse(nq, zsoas);
+            if (soas.Any())
+            {
+                dret.Authority = (ushort)soas.Count;
+                dret.RRAuthority = soas.ToArray();
             }
 
             return dret;
