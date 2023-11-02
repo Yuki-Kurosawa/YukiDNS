@@ -20,8 +20,12 @@ namespace YukiDNS.DNS_RFC
         SRV = 33,
         TXT = 16,
         OPT = 41,
-        DNSKEY=48
 
+        //USE FOR DNSSEC
+        DNSKEY=48,
+        RRSIG=46,
+        NSEC=47,
+        DS=43
     }
 }
 
