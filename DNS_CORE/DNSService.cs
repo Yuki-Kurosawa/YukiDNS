@@ -36,13 +36,13 @@ namespace YukiDNS.DNS_CORE
         public static void LoadZoneFiles()
         {
             string basePath = "zones";
-            string[] fs=Directory.GetFiles(basePath);
+            string[] fs = Directory.GetFiles(basePath);
 
             foreach (string file in fs)
             {
-                string fn=new FileInfo(file).Name.Replace(".zone","").Replace("_",".");
+                string fn = new FileInfo(file).Name.Replace(".zone", "").Replace("_", ".");
                 ZoneArea zone = new ZoneArea(fn);
-                string[] lines=File.ReadAllLines(file);
+                string[] lines = File.ReadAllLines(file);
 
                 foreach (string line in lines)
                 {
@@ -124,9 +124,9 @@ namespace YukiDNS.DNS_CORE
 
 
             ZoneArea selected = null;
-            string Name = "";         
+            string Name = "";
 
-            { 
+            {
                 byte[] RR = dns.RRQueries[0].byteData;
                 int i = 0;
                 for (; i < RR.Length; i++)
@@ -135,14 +135,14 @@ namespace YukiDNS.DNS_CORE
                     Name += (char)RR[i];
                 }
             }
-            Name = Name.FromDNSName();
+            Name = Name.FromDNSName().ToLower();
 
-            string zoneName = Name+".";
+            string zoneName = Name + ".";
 
-            while(selected == null && !string.IsNullOrEmpty(zoneName))
+            while (selected == null && !string.IsNullOrEmpty(zoneName))
             {
                 var zone = zones.Where(k => k.Name == zoneName.TrimEnd('.')).ToList();
-                if(zone.Count>0)
+                if (zone.Count > 0)
                 {
                     selected = zone[0];
                 }
@@ -184,8 +184,9 @@ namespace YukiDNS.DNS_CORE
 
             if (selected == null)
             {
-                dret.ReplyCode = (ushort)ReplyCode.NXDOMAIN;
-                dret.Answer = 0;
+                dret.ReplyCode = (ushort)ReplyCode.REFUSED;
+                dret.Answer = 0;                
+
                 return dret;
             }
 
@@ -193,12 +194,12 @@ namespace YukiDNS.DNS_CORE
             bool any = false;
             string[] qs = selected.Name == Name.TrimEnd('.') ? new[] { "@" } : new[] { Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1), "*" };
 
-            if(dret.RRQueries[0].Type==QTYPES.NS || dret.RRQueries[0].Type == QTYPES.SOA)
+            if (dret.RRQueries[0].Type == QTYPES.NS || dret.RRQueries[0].Type == QTYPES.SOA)
             {
                 exact = true;
             }
 
-            foreach(string s in qs)
+            foreach (string s in qs)
             {
                 if (s == "*")
                 {
@@ -213,7 +214,7 @@ namespace YukiDNS.DNS_CORE
                 {
                     zds = selected.Data.Where(data => data.Type == dret.RRQueries[0].Type && data.Name == "@").ToList();
                 }
-                else if(!any)
+                else if (!any)
                 {
                     zds = selected.Data.Where(data => data.Type == dret.RRQueries[0].Type && data.Name == s).ToList();
                 }
@@ -241,7 +242,7 @@ namespace YukiDNS.DNS_CORE
                 }
             }
 
-            string kc = exact? Name.TrimEnd('.') : Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1);
+            string kc = exact ? Name.TrimEnd('.') : Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1);
 
             if (!exact)
             {
@@ -258,54 +259,55 @@ namespace YukiDNS.DNS_CORE
             }
 
             //ADD SOA RR for All Records
-            var zsoas = selected.Data.Where(data => data.Type == QTYPES.SOA && data.Name == "@").ToList();
-            var nq = dret.RRQueries[0].Copy();
-            nq.Type = QTYPES.SOA;
-            byte[] bd=new byte[nq.byteData.Length];
-            nq.byteData.CopyTo(bd, 0);
-            nq.byteData = bd;
-
-            int k = 0;
-            for (; k < nq.byteData.Length; k++)
             {
-                if (nq.byteData[k] == 0) break;
-                //ret.Name += (char)RR[i];
+                var zsoas = selected.Data.Where(data => data.Type == QTYPES.SOA && data.Name == "@").ToList();
+                var nq = dret.RRQueries[0].Copy();
+                nq.Type = QTYPES.SOA;
+                byte[] bd = new byte[nq.byteData.Length];
+                nq.byteData.CopyTo(bd, 0);
+                nq.byteData = bd;
+
+                int k = 0;
+                for (; k < nq.byteData.Length; k++)
+                {
+                    if (nq.byteData[k] == 0) break;
+                    //ret.Name += (char)RR[i];
+                }
+
+                string rn = selected.Name;
+                List<byte> bn = new List<byte>();
+
+                foreach (string r in rn.Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    byte[] br = Encoding.ASCII.GetBytes(r);
+                    bn.Add((byte)br.Length);
+                    bn.AddRange(br);
+                }
+
+                var bl = nq.byteData.Skip(k).ToArray();
+                List<byte> al = new List<byte>();
+
+                al.AddRange(bn);
+                al.AddRange(bl);
+                nq.byteData = al.ToArray();
+
+                k = 0;
+                for (; k < nq.byteData.Length; k++)
+                {
+                    if (nq.byteData[k] == 0) break;
+                    //ret.Name += (char)RR[i];
+                }
+
+                nq.byteData[k + 1] = 0;
+                nq.byteData[k + 2] = 6;
+
+                List<RRData> soas = BuildResponse(nq, zsoas);
+                if (soas.Any())
+                {
+                    dret.Authority = (ushort)soas.Count;
+                    dret.RRAuthority = soas.ToArray();
+                }
             }
-
-            string rn=selected.Name;
-            List<byte> bn = new List<byte>();          
-
-            foreach(string r in rn.Split(new[] {"."},StringSplitOptions.RemoveEmptyEntries))
-            {
-                byte[] br = Encoding.ASCII.GetBytes(r);
-                bn.Add((byte)br.Length);
-                bn.AddRange(br);
-            }
-
-            var bl = nq.byteData.Skip(k).ToArray();
-            List<byte> al = new List<byte>();
-
-            al.AddRange(bn);
-            al.AddRange(bl);
-            nq.byteData = al.ToArray();
-
-            k = 0;
-            for (; k < nq.byteData.Length; k++)
-            {
-                if (nq.byteData[k] == 0) break;
-                //ret.Name += (char)RR[i];
-            }
-
-            nq.byteData[k + 1] = 0;
-            nq.byteData[k + 2] = 6;
-
-            List<RRData> soas = BuildResponse(nq, zsoas);
-            if (soas.Any())
-            {
-                dret.Authority = (ushort)soas.Count;
-                dret.RRAuthority = soas.ToArray();
-            }
-
             return dret;
         }
 
@@ -317,7 +319,7 @@ namespace YukiDNS.DNS_CORE
 
                 for (var i = 1; i <= zds.Count; i++)
                 {
-                    var a = RRData.BuildResponse_A(query.byteData, 1, 4, zds[i-1].Data[0].ToString());
+                    var a = RRData.BuildResponse_A(query.byteData, 1, 4, zds[i - 1].Data[0].ToString());
                     answers.Add(a);
                 }
 
@@ -438,7 +440,7 @@ namespace YukiDNS.DNS_CORE
             }
             else if (query.Type == QTYPES.DNSKEY)
             {
-                
+
             }
             else
             {
@@ -468,7 +470,7 @@ namespace YukiDNS.DNS_CORE
             Console.WriteLine(dns.TransactionID.ToString() + " " + (dns.IsResponse ? "RESP" : "REQ") + " " + dns.OpCode.ToString() +
                 " " + dns.Query.ToString() + " " + dns.Answer.ToString() + " " + dns.Authority.ToString() + " " + dns.Addtional.ToString() +
                 "\r\n" + Name + " " + dns.RRQueries[0].Type + " " + dns.RRQueries[0].Class + "\r\n");
-            Console.WriteLine( "===================\r\n"+ JsonConvert.SerializeObject(dns)+"\r\n===================\r\n");
+            Console.WriteLine("===================\r\n" + JsonConvert.SerializeObject(dns) + "\r\n===================\r\n");
             /*txtLog.SelectionStart = txtLog.TextLength;
             txtLog.ScrollToCaret();*/
             return dns;
