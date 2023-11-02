@@ -240,7 +240,7 @@ namespace YukiDNS.DNS_CORE
                 }
             }
 
-            string kc = Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1);
+            string kc = exact? Name.TrimEnd('.') : Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1);
             int allCount = selected.Data.Where(data => data.Type != QTYPES.NS && data.Type != QTYPES.SOA && data.Name == kc).ToList().Count;
             if(allCount==0)
             {
