@@ -25,7 +25,8 @@ namespace YukiDNS.DNS_RFC
         DNSKEY=48,
         RRSIG=46,
         NSEC=47,
-        DS=43
+        DS=43,
+        NSEC3=50
     }
 }
 
