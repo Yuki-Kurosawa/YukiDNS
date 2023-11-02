@@ -192,14 +192,20 @@ namespace YukiDNS.DNS_CORE
             bool any = false;
             string[] qs = selected.Name == Name.TrimEnd('.') ? new[] { "@" } : new[] { Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1), "*" };
 
-            if(dret.RRQueries[0].Type==QTYPES.NS)
+            if(dret.RRQueries[0].Type==QTYPES.NS || dret.RRQueries[0].Type == QTYPES.SOA)
             {
                 exact = true;
             }
 
             foreach(string s in qs)
             {
-                if (s == "*") any = true;
+                if (s == "*")
+                {
+                    any = true;
+                    var pl = selected.Data.Where(data => data.Name == qs[0]).ToList();
+
+                    if (pl.Any()) break;
+                }
                 List<ZoneData> zds = new List<ZoneData>();
 
                 if (exact)
@@ -234,7 +240,14 @@ namespace YukiDNS.DNS_CORE
                 }
             }
 
-            if(dret.Answer == 0 && dret.ReplyCode==(ushort)ReplyCode.NOERROR) {
+            string kc = Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1);
+            int allCount = selected.Data.Where(data => data.Type != QTYPES.NS && data.Type != QTYPES.SOA && data.Name == kc).ToList().Count;
+            if(allCount==0)
+            {
+                allCount = selected.Data.Where(data => data.Type != QTYPES.NS && data.Type != QTYPES.SOA && data.Name == "*").ToList().Count;
+            }
+
+            if (allCount == 0 && dret.ReplyCode==(ushort)ReplyCode.NOERROR) {
                 dret.ReplyCode = (ushort)ReplyCode.NXDOMAIN;
             }
             
