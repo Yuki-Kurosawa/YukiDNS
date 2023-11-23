@@ -12,6 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="certs\put_your_certs_here.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="conf\ca.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="zones\a1_e1_ksyuki_com.zone">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>

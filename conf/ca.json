@@ -1,0 +1,16 @@
+﻿{
+  "KeySize": 2048,
+  "SignMethod": "SHA256withRSA",
+  "SelfSignCACertExpire": 3650,
+  "CACertExpire": 1825,
+  "EndUserCertExpire": 90,
+  "AIAConfig": {
+    "UseAIA": false,
+    "CAIssuer": "http://localhost/ca.cer",
+    "OCSPMethod": "http://localhost/ocsp"
+  },
+  "CertDir": "certs/",
+  "DefaultSelfSignCAName": "CN=Test Root CA,OU=ca.example.com,O=TestCert,L=Chiyodaku,ST=Tokyo,C=JP",
+  "DefaultCAName": "CN=Test Class 1 CA,OU=ca.example.com,O=TestCert,L=Chiyodaku,ST=Tokyo,C=JP",
+  "DefaultEndUserName": "CN=example.com,OU=ca.example.com,O=TestCert,L=Chiyodaku,ST=Tokyo,C=JP"
+}
