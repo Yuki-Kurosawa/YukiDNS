@@ -57,7 +57,7 @@ namespace YukiDNS.CA_CORE
                 name = config.DefaultSelfSignCAName;
             }
 
-            #region DO ROOT CA
+            
             var keyr = new RSACryptoServiceProvider(config.KeySize);
             var key = DotNetUtilities.GetRsaKeyPair(keyr);
 
@@ -66,7 +66,7 @@ namespace YukiDNS.CA_CORE
             Console.WriteLine("Cert is generated, press any key to exit");
             Console.ReadKey();
 
-            #endregion
+            
 
         }
 
@@ -93,16 +93,20 @@ namespace YukiDNS.CA_CORE
                 caname = config.DefaultSelfSignCAName;
             }
 
-            #region DO ROOT CA
+            
             var keyr = new RSACryptoServiceProvider(config.KeySize);
             var key = DotNetUtilities.GetRsaKeyPair(keyr);
 
-            CA_Helper.GenerateLayer2Cert(config, caname, name, key, key);
+            var capem=File.ReadAllText(config.CertDir+"ca.pem");
+            var cakeyr = RSACryptoHelper.PemToRSAKey(capem);
+            var cakey = DotNetUtilities.GetRsaKeyPair(cakeyr);
+
+            CA_Helper.GenerateLayer2Cert(config, caname, name, cakey, key);
 
             Console.WriteLine("Cert is generated, press any key to exit");
             Console.ReadKey();
 
-            #endregion
+            
         }
 
         public static void GenerateEndUser()
@@ -128,16 +132,20 @@ namespace YukiDNS.CA_CORE
                 caname = config.DefaultCAName;
             }
 
-            #region DO ROOT CA
+            
             var keyr = new RSACryptoServiceProvider(config.KeySize);
             var key = DotNetUtilities.GetRsaKeyPair(keyr);
 
-            CA_Helper.GenerateEndUserCert(config, caname, name, key, key);
+            var capem = File.ReadAllText(config.CertDir + "subca.pem");
+            var cakeyr = RSACryptoHelper.PemToRSAKey(capem);
+            var cakey = DotNetUtilities.GetRsaKeyPair(cakeyr);
+
+            CA_Helper.GenerateEndUserCert(config, caname, name, cakey, key);
 
             Console.WriteLine("Cert is generated, press any key to exit");
             Console.ReadKey();
 
-            #endregion
+            
         }
 
     }
