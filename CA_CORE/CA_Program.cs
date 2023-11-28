@@ -30,7 +30,7 @@ namespace YukiDNS.CA_CORE
             Console.WriteLine("Yuki Certificate Authority 0.1.4");
             Console.WriteLine("1. Generate Self Signed Root CA Certificate");
             Console.WriteLine("2. Generate Layer-2 CA Certificate");
-            Console.WriteLine("3. Generate End User Certificate");
+            Console.WriteLine("3. Generate Web Server Certificate");
             Console.WriteLine("0. Exit");
             Console.Write("Please Input Your Choice: ");
             string input = Console.ReadLine();
@@ -38,7 +38,7 @@ namespace YukiDNS.CA_CORE
             {
                 case "1": GenerateSelfSign(); break;
                 case "2": GenerateLayer2(); break;
-                case "3": GenerateEndUser(); break;
+                case "3": GenerateWebServer(); break;
                 case "0": return;
             }
         }
@@ -109,10 +109,10 @@ namespace YukiDNS.CA_CORE
             
         }
 
-        public static void GenerateEndUser()
+        public static void GenerateWebServer()
         {
             Console.Clear();
-            Console.WriteLine("Generate End User Certificate");
+            Console.WriteLine("Generate Web Server Certificate");
             Console.WriteLine("-----------------------------------------");
             Console.WriteLine("Please Input Your Name in X509 Format:");
 
@@ -132,6 +132,9 @@ namespace YukiDNS.CA_CORE
                 caname = config.DefaultCAName;
             }
 
+            Console.WriteLine("Please Input Your SANs as comma-separated string:");
+            string sans = Console.ReadLine();
+
             
             var keyr = new RSACryptoServiceProvider(config.KeySize);
             var key = DotNetUtilities.GetRsaKeyPair(keyr);
@@ -140,7 +143,7 @@ namespace YukiDNS.CA_CORE
             var cakeyr = RSACryptoHelper.PemToRSAKey(capem);
             var cakey = DotNetUtilities.GetRsaKeyPair(cakeyr);
 
-            CA_Helper.GenerateEndUserCert(config, caname, name, cakey, key);
+            CA_Helper.GenerateWebServerCert(config, caname, name,sans, cakey, key);
 
             Console.WriteLine("Cert is generated, press any key to exit");
             Console.ReadKey();

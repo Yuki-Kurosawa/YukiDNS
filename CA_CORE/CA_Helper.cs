@@ -143,7 +143,7 @@ namespace YukiDNS.CA_CORE
             File.WriteAllText(config.CertDir + "subca.pem", ca2);
         }
 
-        public static void GenerateEndUserCert(CA_Config config, string caname, string name, AsymmetricCipherKeyPair cakey, AsymmetricCipherKeyPair key)
+        public static void GenerateWebServerCert(CA_Config config, string caname, string name,string dnsnames, AsymmetricCipherKeyPair cakey, AsymmetricCipherKeyPair key)
         {
             Asn1SignatureFactory subasn = new Asn1SignatureFactory("SHA256withRSA", cakey.Private, new SecureRandom());
 
@@ -169,6 +169,34 @@ namespace YukiDNS.CA_CORE
             subgen.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(false));
             subgen.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyEncipherment));
 
+            GeneralNames gns1 = null;
+
+            List<GeneralName> gnsl = new List<GeneralName>();
+
+            string[] dnsnamelist = dnsnames.Split(',');
+
+            foreach(string dnsname in dnsnamelist)
+            {
+                if (!string.IsNullOrEmpty(dnsname.Trim()))
+                {
+                    gnsl.Add(new GeneralName(GeneralName.DnsName, dnsname.Trim()));
+                }
+            }
+            
+            //new GeneralNames(new GeneralName[] {
+            //        new GeneralName(GeneralName.DnsName,"localhost"),
+            //        new GeneralName(GeneralName.IPAddress,"127.0.0.1"),
+            //        new GeneralName(GeneralName.IPAddress,"::1"),
+            //        new GeneralName(GeneralName.Rfc822Name,"admin@test.root"),
+            //        new GeneralName(GeneralName.Rfc822Name,"www@test.root"),
+            //    });
+
+            if (gnsl.Count > 0)
+            {
+                gns1=new GeneralNames(gnsl.ToArray());
+                subgen.AddExtension(X509Extensions.SubjectAlternativeName, false, gns1.ToAsn1Object());
+
+            }
 
             var subcert = subgen.Generate(subasn);
 
