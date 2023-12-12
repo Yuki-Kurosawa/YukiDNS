@@ -19,10 +19,10 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="zones\a1_e1_ksyuki_com.zone">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="zones\e1_ksyuki_com.zone">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="zones\put_zone_files_here.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

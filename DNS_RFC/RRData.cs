@@ -541,7 +541,7 @@ namespace YukiDNS.DNS_RFC
             ret.RDLength = (ushort)(RR[i + 9] * 0x100 + RR[i + 10]);
             ret.RDData=RR.Skip(i + 11).ToArray();
 
-            if(ret.Type!=QTYPES.OPT)
+            if (ret.Type != QTYPES.OPT)
             {
                 ret.OPTData = null;
             }

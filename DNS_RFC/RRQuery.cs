@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace YukiDNS.DNS_RFC
 {
@@ -44,6 +46,55 @@ namespace YukiDNS.DNS_RFC
                 p.SetValue(obj, p.GetValue(this));
             }
             return obj;
+        }
+
+        public RRQuery ChangeQueryType(QTYPES type,string cname="")
+        {
+            var nq = this.Copy();
+            {
+
+                nq.Type = type;
+                byte[] bd = new byte[nq.byteData.Length];
+                nq.byteData.CopyTo(bd, 0);
+                nq.byteData = bd;
+
+                int k = 0;
+                for (; k < nq.byteData.Length; k++)
+                {
+                    if (nq.byteData[k] == 0) break;
+                    //ret.Name += (char)RR[i];
+                }
+
+                string rn = cname;
+                List<byte> bn = new List<byte>();
+
+                foreach (string r in rn.Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    byte[] br = Encoding.ASCII.GetBytes(r);
+                    bn.Add((byte)br.Length);
+                    bn.AddRange(br);
+                }
+
+                var bl = nq.byteData.Skip(k).ToArray();
+                List<byte> al = new List<byte>();
+
+                al.AddRange(bn);
+                al.AddRange(bl);
+                nq.byteData = al.ToArray();
+
+                k = 0;
+                for (; k < nq.byteData.Length; k++)
+                {
+                    if (nq.byteData[k] == 0) break;
+                    //ret.Name += (char)RR[i];
+                }
+
+                nq.byteData[k + 1] = (byte)(((int)nq.Type) / 256);
+                nq.byteData[k + 2] = (byte)(((int)nq.Type) % 256);
+
+            }
+
+            return nq;
         }
     }
 

@@ -204,9 +204,9 @@ namespace YukiDNS.DNS_CORE
                 if (s == "*")
                 {
                     any = true;
-                    var pl = selected.Data.Where(data => data.Name == qs[0]).ToList();
+                    var pl = selected.Data.Where(data => data.Name == s).ToList();
 
-                    if (pl.Any()) break;
+                    //if (pl.Any()) break;
                 }
                 List<ZoneData> zds = new List<ZoneData>();
 
@@ -218,6 +218,10 @@ namespace YukiDNS.DNS_CORE
                 {
                     zds = selected.Data.Where(data => data.Type == dret.RRQueries[0].Type && data.Name == s).ToList();
                 }
+                else if (any && (dret.RRQueries[0].Type == QTYPES.A || dret.RRQueries[0].Type == QTYPES.AAAA))
+                {
+                    zds = selected.Data.Where(data => (data.Type == dret.RRQueries[0].Type || data.Type == QTYPES.CNAME) && data.Name == "*").ToList();
+                }
                 else
                 {
                     zds = selected.Data.Where(data => data.Type == dret.RRQueries[0].Type && data.Name == "*").ToList();
@@ -227,7 +231,18 @@ namespace YukiDNS.DNS_CORE
                 {
                     try
                     {
-                        List<RRData> answers = BuildResponse(dret.RRQueries[0], zds);
+
+                        List<RRData> answers = null;
+
+                        if (zds.Where(q => q.Type == QTYPES.CNAME && dret.RRQueries[0].Type != QTYPES.CNAME).Any())
+                        {
+                            var nq = dret.RRQueries[0].ChangeQueryType(QTYPES.CNAME,selected.Name);
+                            answers = BuildResponse(nq, zds);
+                        }
+                        else
+                        {
+                            answers = BuildResponse(dret.RRQueries[0], zds);
+                        }
                         if (answers.Any())
                         {
                             dret.Answer = (ushort)answers.Count;
@@ -261,45 +276,8 @@ namespace YukiDNS.DNS_CORE
             //ADD SOA RR for All Records
             {
                 var zsoas = selected.Data.Where(data => data.Type == QTYPES.SOA && data.Name == "@").ToList();
-                var nq = dret.RRQueries[0].Copy();
-                nq.Type = QTYPES.SOA;
-                byte[] bd = new byte[nq.byteData.Length];
-                nq.byteData.CopyTo(bd, 0);
-                nq.byteData = bd;
 
-                int k = 0;
-                for (; k < nq.byteData.Length; k++)
-                {
-                    if (nq.byteData[k] == 0) break;
-                    //ret.Name += (char)RR[i];
-                }
-
-                string rn = selected.Name;
-                List<byte> bn = new List<byte>();
-
-                foreach (string r in rn.Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    byte[] br = Encoding.ASCII.GetBytes(r);
-                    bn.Add((byte)br.Length);
-                    bn.AddRange(br);
-                }
-
-                var bl = nq.byteData.Skip(k).ToArray();
-                List<byte> al = new List<byte>();
-
-                al.AddRange(bn);
-                al.AddRange(bl);
-                nq.byteData = al.ToArray();
-
-                k = 0;
-                for (; k < nq.byteData.Length; k++)
-                {
-                    if (nq.byteData[k] == 0) break;
-                    //ret.Name += (char)RR[i];
-                }
-
-                nq.byteData[k + 1] = 0;
-                nq.byteData[k + 2] = 6;
+                var nq = dret.RRQueries[0].ChangeQueryType(QTYPES.SOA, selected.Name);
 
                 List<RRData> soas = BuildResponse(nq, zsoas);
                 if (soas.Any())
