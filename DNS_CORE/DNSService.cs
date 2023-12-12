@@ -214,13 +214,17 @@ namespace YukiDNS.DNS_CORE
                 {
                     zds = selected.Data.Where(data => data.Type == dret.RRQueries[0].Type && data.Name == "@").ToList();
                 }
-                else if (!any)
+                else if (!any && (dret.RRQueries[0].Type == QTYPES.A || dret.RRQueries[0].Type == QTYPES.AAAA))
                 {
-                    zds = selected.Data.Where(data => data.Type == dret.RRQueries[0].Type && data.Name == s).ToList();
+                    zds = selected.Data.Where(data => (data.Type == dret.RRQueries[0].Type || data.Type == QTYPES.CNAME) && data.Name == s).ToList();
                 }
                 else if (any && (dret.RRQueries[0].Type == QTYPES.A || dret.RRQueries[0].Type == QTYPES.AAAA))
                 {
                     zds = selected.Data.Where(data => (data.Type == dret.RRQueries[0].Type || data.Type == QTYPES.CNAME) && data.Name == "*").ToList();
+                }
+                else if (!any)
+                {
+                    zds = selected.Data.Where(data => data.Type == dret.RRQueries[0].Type && data.Name == s).ToList();
                 }
                 else
                 {
