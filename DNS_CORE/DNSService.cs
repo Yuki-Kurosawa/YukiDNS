@@ -238,6 +238,10 @@ namespace YukiDNS.DNS_CORE
                         {
                             var nq = dret.RRQueries[0].ChangeQueryType(QTYPES.CNAME,selected.Name);
                             answers = BuildResponse(nq, zds);
+                            var cname = zds[0].Data[0].ToString();
+                            var dnsq = dns.Copy();
+                            dnsq.RRQueries[0] = dns.RRQueries[0].ChangeName(cname);
+                            answers.AddRange(Resolve(dnsq).RRAnswer);
                         }
                         else
                         {

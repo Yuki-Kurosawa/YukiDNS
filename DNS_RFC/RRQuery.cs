@@ -96,6 +96,54 @@ namespace YukiDNS.DNS_RFC
 
             return nq;
         }
+
+        public RRQuery ChangeName(string cname = "")
+        {
+            var nq = this.Copy();
+            {
+
+                byte[] bd = new byte[nq.byteData.Length];
+                nq.byteData.CopyTo(bd, 0);
+                nq.byteData = bd;
+
+                int k = 0;
+                for (; k < nq.byteData.Length; k++)
+                {
+                    if (nq.byteData[k] == 0) break;
+                    //ret.Name += (char)RR[i];
+                }
+
+                string rn = cname;
+                List<byte> bn = new List<byte>();
+
+                foreach (string r in cname.Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    byte[] br = Encoding.ASCII.GetBytes(r);
+                    bn.Add((byte)br.Length);
+                    bn.AddRange(br);
+                }
+
+                var bl = nq.byteData.Skip(k).ToArray();
+                List<byte> al = new List<byte>();
+
+                al.AddRange(bn);
+                al.AddRange(bl);
+                nq.byteData = al.ToArray();
+
+                k = 0;
+                for (; k < nq.byteData.Length; k++)
+                {
+                    if (nq.byteData[k] == 0) break;
+                    //ret.Name += (char)RR[i];
+                }
+
+                nq.byteData[k + 1] = (byte)(((int)nq.Type) / 256);
+                nq.byteData[k + 2] = (byte)(((int)nq.Type) % 256);
+
+            }
+
+            return nq;
+        }
     }
 
 }
