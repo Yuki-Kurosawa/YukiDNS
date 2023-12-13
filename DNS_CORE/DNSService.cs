@@ -244,10 +244,10 @@ namespace YukiDNS.DNS_CORE
                             answers = BuildResponse(nq, zds);
                             var cname = zds[0].Data[0].ToString();
                             var dnsq = new DNSRequest();
-                            dnsq.RRQueries = new List<RRQuery>(1).ToArray();
+                            dnsq.RRQueries = new RRQuery[1];
                             dnsq.Query = 1;
                             dnsq.RRQueries[0] = dret.RRQueries[0].ChangeName(cname);
-                            //answers.AddRange(Resolve(dnsq).RRAnswer);
+                            answers.AddRange(Resolve(dnsq).RRAnswer);
                         }
                         else
                         {

@@ -364,4 +364,8 @@ MigrationBackup/
 FodyWeavers.xsd
 
 *.zone
+*.cer
+*.crt
+*.pfx
+*.pem
 
