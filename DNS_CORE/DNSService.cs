@@ -247,7 +247,7 @@ namespace YukiDNS.DNS_CORE
                             dnsq.RRQueries = new RRQuery[1];
                             dnsq.Query = 1;
                             dnsq.RRQueries[0] = dret.RRQueries[0].ChangeName(cname);
-                            answers.AddRange(Resolve(dnsq).RRAnswer);
+                            answers.AddRange(Resolve(dnsq).RRAnswer??new RRData[0]);
                         }
                         else
                         {
