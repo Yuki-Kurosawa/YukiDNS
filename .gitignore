@@ -368,4 +368,8 @@ FodyWeavers.xsd
 *.crt
 *.pfx
 *.pem
-
+dsset-*
+*.signed
+*.private
+*.key
+*.bat
