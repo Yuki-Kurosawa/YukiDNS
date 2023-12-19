@@ -373,3 +373,4 @@ dsset-*
 *.private
 *.key
 *.bat
+*.csr
