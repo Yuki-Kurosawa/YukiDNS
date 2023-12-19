@@ -42,7 +42,7 @@ namespace YukiDNS
 
                     try
                     {
-                        ZoneData data1=ZoneParser.ParseLine(line);
+                        ZoneData data1=ZoneParser.ParseLine(line,"e1.ksyuki.com");
                         Console.WriteLine(JsonConvert.SerializeObject(data1));
                     }
                     catch(Exception ex)

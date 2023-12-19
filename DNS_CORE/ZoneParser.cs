@@ -9,13 +9,23 @@ namespace YukiDNS.DNS_CORE
 {
     public static class ZoneParser
     {
-        public static ZoneData ParseLine(string line)
+        public static ZoneData ParseLine(string line,string zoneName)
         {
             string[] args = line.Split(new string[] { "\t", " " }, StringSplitOptions.RemoveEmptyEntries);
 
             string name = args[0];
             uint ttl = uint.Parse(args[1]);
             QTYPES type=(QTYPES)Enum.Parse(typeof(QTYPES), args[3]);
+
+            if (name.Contains(zoneName + "."))
+            {
+                name = name.Replace(zoneName + ".", "").Trim('.');
+            }
+
+            if(string.IsNullOrEmpty(name))
+            {
+                name = "@";
+            }
 
             byte[] rrb = new byte[1] { (byte)'.'};
 

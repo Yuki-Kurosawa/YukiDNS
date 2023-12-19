@@ -50,7 +50,7 @@ namespace YukiDNS.DNS_CORE
 
                     try
                     {
-                        ZoneData data = ZoneParser.ParseLine(line);
+                        ZoneData data = ZoneParser.ParseLine(line, fn);
                         zone.Data.Add(data);
                     }
                     catch
