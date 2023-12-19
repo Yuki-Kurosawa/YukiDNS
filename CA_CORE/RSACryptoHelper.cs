@@ -35,7 +35,7 @@ namespace YukiDNS.CA_CORE
         public static RSAParameters PemToRSAKey(string pemKey)
         {
             string empty = string.Empty;
-            object? obj = null;
+            object obj = null;
             using (StringReader reader = new StringReader(pemKey))
                 obj = new PemReader((TextReader)reader).ReadObject();
             RSAParameters rsaKey;
