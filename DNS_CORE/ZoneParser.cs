@@ -84,6 +84,22 @@ namespace YukiDNS.DNS_CORE
                         Type = type,
                         Data = new object[] {  args[4], args[5], uint.Parse(args[6]), uint.Parse(args[7]), uint.Parse(args[8]), uint.Parse(args[9]), uint.Parse(args[10]) }
                     };
+                case QTYPES.DNSKEY:
+                    return new ZoneData()
+                    {
+                        Name = name,
+                        TTL = ttl,
+                        Type = type,
+                        Data = new object[] { args[4], args[5], uint.Parse(args[6]), args[7], args[8] }
+                    };
+                case QTYPES.DS:
+                    return new ZoneData()
+                    {
+                        Name = name,
+                        TTL = ttl,
+                        Type = type,
+                        Data = new object[] { args[4], args[5], uint.Parse(args[6]), args[7], args[8] }
+                    };
                 default:
                     throw new Exception("RR Data Format Error");
             }

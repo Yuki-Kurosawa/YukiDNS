@@ -46,6 +46,8 @@ namespace YukiDNS.DNS_CORE
 
                 foreach (string line in lines)
                 {
+                    if (string.IsNullOrEmpty(line)) continue;
+
                     try
                     {
                         ZoneData data = ZoneParser.ParseLine(line);
@@ -455,10 +457,10 @@ namespace YukiDNS.DNS_CORE
             }
             Name = Name.FromDNSName();
 
-            Console.WriteLine(dns.TransactionID.ToString() + " " + (dns.IsResponse ? "RESP" : "REQ") + " " + dns.OpCode.ToString() +
-                " " + dns.Query.ToString() + " " + dns.Answer.ToString() + " " + dns.Authority.ToString() + " " + dns.Addtional.ToString() +
-                "\r\n" + Name + " " + dns.RRQueries[0].Type + " " + dns.RRQueries[0].Class + "\r\n");
-            Console.WriteLine("===================\r\n" + JsonConvert.SerializeObject(dns) + "\r\n===================\r\n");
+            //Console.WriteLine(dns.TransactionID.ToString() + " " + (dns.IsResponse ? "RESP" : "REQ") + " " + dns.OpCode.ToString() +
+            //    " " + dns.Query.ToString() + " " + dns.Answer.ToString() + " " + dns.Authority.ToString() + " " + dns.Addtional.ToString() +
+            //    "\r\n" + Name + " " + dns.RRQueries[0].Type + " " + dns.RRQueries[0].Class + "\r\n");
+            //Console.WriteLine("===================\r\n" + JsonConvert.SerializeObject(dns) + "\r\n===================\r\n");
             /*txtLog.SelectionStart = txtLog.TextLength;
             txtLog.ScrollToCaret();*/
             return dns;

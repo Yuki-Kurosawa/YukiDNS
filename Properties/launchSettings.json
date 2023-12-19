@@ -2,7 +2,7 @@
   "profiles": {
     "YukiDNS": {
       "commandName": "Project",
-      "commandLineArgs": "dns",
+      "commandLineArgs": "zone",
       "remoteDebugEnabled": false
     },
     "WSL": {

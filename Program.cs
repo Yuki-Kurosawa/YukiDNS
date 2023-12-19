@@ -34,10 +34,12 @@ namespace YukiDNS
             }
             else if (args[0] == "zone")
             {
-                string[] data = File.ReadAllLines(@"test_com.zone");
+                string[] data = File.ReadAllLines(@"zones\e1_ksyuki_com.zone");
 
                 foreach (string line in data)
                 {
+                    if (string.IsNullOrEmpty(line)) continue;
+
                     try
                     {
                         ZoneData data1=ZoneParser.ParseLine(line);
