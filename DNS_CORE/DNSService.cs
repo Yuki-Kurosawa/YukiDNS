@@ -194,12 +194,30 @@ namespace YukiDNS.DNS_CORE
 
             bool exact = selected.Name == Name.TrimEnd('.');
             bool any = false;
-            string[] qs = selected.Name == Name.TrimEnd('.') ? new[] { "@" } : new[] { Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1), "*" };
+            string sn = Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1);
+            string[] qs = selected.Name == Name.TrimEnd('.') ? new[] { "@" } : new[] { sn, "*" };
 
             if (dret.RRQueries[0].Type == QTYPES.NS || dret.RRQueries[0].Type == QTYPES.SOA)
             {
                 exact = true;
             }
+
+            if (!exact && new[] { QTYPES.A, QTYPES.AAAA, QTYPES.CNAME }.Contains(dret.RRQueries[0].Type))
+            {
+                string s = sn;
+                var exactrr = selected.Data.Where(data => (data.Type == QTYPES.A || data.Type == QTYPES.AAAA || data.Type == QTYPES.CNAME) && data.Name == s).ToList();
+
+                if (exactrr.Count > 0)
+                {
+                    qs = new[] { sn };
+                }
+            }
+            else if (!exact && new[] { QTYPES.NS, QTYPES.CAA, QTYPES.MX, QTYPES.NS, QTYPES.DS, QTYPES.DNSKEY }.Contains(dret.RRQueries[0].Type))
+            {
+                string s = sn;
+                qs = new[] { sn };
+            }
+
 
             foreach (string s in qs)
             {
@@ -210,6 +228,7 @@ namespace YukiDNS.DNS_CORE
 
                     //if (pl.Any()) break;
                 }
+
                 List<ZoneData> zds = new List<ZoneData>();
 
                 if (exact)
