@@ -565,7 +565,111 @@ namespace YukiDNS.DNS_RFC
             opt.Z = (ushort)(TTL % 0x80u);
             return opt;
         }
-    
+
+        public static RRData BuildResponse_DNSKEY(byte[] RR, int TTL, object[] data)
+        {
+            RRData ret = new RRData();
+            ret.byteData = RR;
+            int i = 0;
+            for (; i < RR.Length; i++)
+            {
+                if (RR[i] == 0) break;
+                ret.Name += (char)RR[i];
+            }
+
+            ret.Name = ret.Name.FromDNSName();
+
+            ret.Type = (QTYPES)(RR[i + 1] * 0x100 + RR[i + 2]);
+            ret.Class = (RRClass)(RR[i + 3] * 0x100 + RR[i + 4]);
+
+            //TTL
+            ret.byteData = ret.byteData.Append((byte)(TTL / 16777216)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 16777216 / 65536)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 65536 / 256)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 256)).ToArray();
+
+            int rdLen = 0;
+            List<byte> rdData = new List<byte>();
+            rdData.Add((byte)((uint)data[0] % 65536 / 256));
+            rdData.Add((byte)((uint)data[0] % 256));
+
+            rdData.Add((byte)(uint)data[1]);
+
+            rdData.Add((byte)(uint)data[2]);
+
+            string base64Key = data[3].ToString() + data[4].ToString();
+            byte[] byteKey = Convert.FromBase64String(base64Key);
+
+            for (var j = 0; j < byteKey.Length; j++)
+            {
+                rdData.Add((byte)(uint)byteKey[j]);
+            }
+
+            rdLen =rdData.Count;
+
+            //RD Length
+            ret.byteData = ret.byteData.Append((byte)(rdLen / 256)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(rdLen % 256)).ToArray();
+
+            for (var j = 0; j < rdLen; j++)
+            {
+                ret.byteData = ret.byteData.Append(rdData[j]).ToArray();
+            }
+
+            return ret;
+        }
+
+        public static RRData BuildResponse_DS(byte[] RR, int TTL, object[] data)
+        {
+            RRData ret = new RRData();
+            ret.byteData = RR;
+            int i = 0;
+            for (; i < RR.Length; i++)
+            {
+                if (RR[i] == 0) break;
+                ret.Name += (char)RR[i];
+            }
+
+            ret.Name = ret.Name.FromDNSName();
+
+            ret.Type = (QTYPES)(RR[i + 1] * 0x100 + RR[i + 2]);
+            ret.Class = (RRClass)(RR[i + 3] * 0x100 + RR[i + 4]);
+
+            //TTL
+            ret.byteData = ret.byteData.Append((byte)(TTL / 16777216)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 16777216 / 65536)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 65536 / 256)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 256)).ToArray();
+
+            int rdLen = 0;
+            List<byte> rdData = new List<byte>();
+            rdData.Add((byte)((uint)data[0] % 65536 / 256));
+            rdData.Add((byte)((uint)data[0] % 256));
+
+            rdData.Add((byte)(uint)data[1]);
+
+            rdData.Add((byte)(uint)data[2]);
+
+            string binKey = data[3].ToString() + data[4].ToString();
+
+            for (var j = 0; j < binKey.Length; j+=2)
+            {
+                rdData.Add((byte)Convert.ToByte(binKey[j].ToString() + binKey[j + 1].ToString(),16));
+            }
+
+            rdLen = rdData.Count;
+
+            //RD Length
+            ret.byteData = ret.byteData.Append((byte)(rdLen / 256)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(rdLen % 256)).ToArray();
+
+            for (var j = 0; j < rdLen; j++)
+            {
+                ret.byteData = ret.byteData.Append(rdData[j]).ToArray();
+            }
+
+            return ret;
+        }
 
     }
 

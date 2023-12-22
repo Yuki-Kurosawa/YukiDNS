@@ -194,7 +194,14 @@ namespace YukiDNS.DNS_CORE
 
             bool exact = selected.Name == Name.TrimEnd('.');
             bool any = false;
-            string sn = Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1);
+
+            string sn = "@";
+
+            if (selected.Name != Name.TrimEnd('.'))
+            {
+                sn = Name.TrimEnd('.').Substring(0, Name.Length - selected.Name.Length - 1);
+            }
+
             string[] qs = selected.Name == Name.TrimEnd('.') ? new[] { "@" } : new[] { sn, "*" };
 
             if (dret.RRQueries[0].Type == QTYPES.NS || dret.RRQueries[0].Type == QTYPES.SOA)
@@ -449,7 +456,19 @@ namespace YukiDNS.DNS_CORE
             }
             else if (query.Type == QTYPES.DNSKEY)
             {
-
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    var a = RRData.BuildResponse_DNSKEY(query.byteData, 1, zds[i - 1].Data);
+                    answers.Add(a);
+                }
+            }
+            else if (query.Type == QTYPES.DS)
+            {
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    var a = RRData.BuildResponse_DS(query.byteData, 1, zds[i - 1].Data);
+                    answers.Add(a);
+                }
             }
             else
             {
