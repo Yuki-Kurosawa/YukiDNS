@@ -362,7 +362,7 @@ namespace YukiDNS.DNS_CORE
                         var sig = zds[i - 1].RRSIG;
                         var sigq=query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
-                        //answers.Add(b);
+                        answers.Add(b);
                     }
                 }
 
