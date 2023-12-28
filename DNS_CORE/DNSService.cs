@@ -47,10 +47,16 @@ namespace YukiDNS.DNS_CORE
                 foreach (string line in lines)
                 {
                     if (string.IsNullOrEmpty(line)) continue;
+                    var line2 = line.Replace("\t", " ");
+
+                    while (line2.Contains("  "))
+                    {
+                        line2 = line2.Replace("  ", " ");
+                    }
 
                     try
                     {
-                        ZoneData data = ZoneParser.ParseLine(line, fn);
+                        ZoneData data = ZoneParser.ParseLine(line2, fn);
                         zone.Data.Add(data);
                     }
                     catch

@@ -24,6 +24,9 @@
     <None Update="zones\e1_ksyuki_com.zone">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="zones\e1_ksyuki_com.org.zone">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="zones\e1_ksyuki_com.zone.signed">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

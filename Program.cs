@@ -39,15 +39,22 @@ namespace YukiDNS
                 foreach (string line in data)
                 {
                     if (string.IsNullOrEmpty(line)) continue;
+                    var line2 = line.Replace("\t", " ");
+
+                    while(line2.Contains("  "))
+                    {
+                        line2=line2.Replace("  ", " ");
+                    }
+
 
                     try
                     {
-                        ZoneData data1=ZoneParser.ParseLine(line,"e1.ksyuki.com");
+                        ZoneData data1=ZoneParser.ParseLine(line2,"e1.ksyuki.com");
                         Console.WriteLine(JsonConvert.SerializeObject(data1));
                     }
                     catch(Exception ex)
                     {
-                        Console.WriteLine(ex.Message+":"+line.Split(' ')[3]);
+                        Console.WriteLine(ex.Message+":"+line2.Split(' ')[3]);
                     }
                 }
 
