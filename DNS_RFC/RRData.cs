@@ -738,8 +738,8 @@ namespace YukiDNS.DNS_RFC
             rdData.Add((byte)(ssig % 256));
 
             //RRSIG TAG
-            rdData.Add((byte)((uint)data[1] % 65536 / 256));
-            rdData.Add((byte)((uint)data[1] % 256));
+            rdData.Add((byte)((uint)data[6] % 65536 / 256));
+            rdData.Add((byte)((uint)data[6] % 256));
 
             //RRSIG SIGNER
             foreach(var c in signer)
