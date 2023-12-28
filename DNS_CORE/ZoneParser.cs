@@ -124,7 +124,7 @@ namespace YukiDNS.DNS_CORE
                         Name = name,
                         TTL = ttl,
                         Type = type,
-                        Data = new object[] { Enum.Parse<QTYPES>(args[4]), uint.Parse(args[5]), uint.Parse(args[6]), uint.Parse(args[7]), args[8], args[9], args[10], args[11], args[12], args[13] },
+                        Data = new object[] { Enum.Parse<QTYPES>(args[4]), uint.Parse(args[5]), uint.Parse(args[6]), uint.Parse(args[7]), args[8], args[9], uint.Parse(args[10]), args[11], args[12], args[13] },
                         ZoneName = zoneName
                     };
                 default:
