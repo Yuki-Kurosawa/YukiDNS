@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using System.Collections.Generic;
 using YukiDNS.DNS_RFC;
 
 namespace YukiDNS.DNS_CORE
@@ -7,9 +9,15 @@ namespace YukiDNS.DNS_CORE
     {
 
         public string Name { get; set; }
+
         public uint TTL { get; set; }
+
+        [JsonConverter(typeof(StringEnumConverter))]
         public QTYPES Type { get; set; }
+
         public object[] Data { get; set; }
+
+        public ZoneData RRSIG { get; set; }
     
     }
 
@@ -26,6 +34,6 @@ namespace YukiDNS.DNS_CORE
             get { return _Name; }
         }
 
-        public List<ZoneData> Data { get; set; }=new List<ZoneData>();
+        public List<ZoneData> Data { get; set; } = new List<ZoneData>();
     }
 }

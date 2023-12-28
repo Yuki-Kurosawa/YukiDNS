@@ -36,7 +36,7 @@ namespace YukiDNS.DNS_CORE
         public static void LoadZoneFiles()
         {
             string basePath = "zones";
-            string[] fs = Directory.GetFiles(basePath);
+            string[] fs = Directory.GetFiles(basePath,"e1_ksyuki_com.zone");
 
             foreach (string file in fs)
             {
@@ -56,13 +56,26 @@ namespace YukiDNS.DNS_CORE
 
                     try
                     {
-                        ZoneData data = ZoneParser.ParseLine(line2, fn);
-                        zone.Data.Add(data);
+                        ZoneData data1 = ZoneParser.ParseLine(line2, "e1.ksyuki.com");
+                        if (data1.Type != QTYPES.RRSIG)
+                        {
+                            zone.Data.Add(data1);
+                        }
+                        else
+                        {
+                            var ql = zone.Data.Where(q => q.Type == (QTYPES)data1.Data[0] && q.Name == data1.Name).ToList();
+                            if (ql.Count > 0)
+                            {
+                                ql[0].RRSIG = data1;
+                            }
+                        }
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        Console.WriteLine(ex.Message + ":" + line2.Split(' ')[3]);
                     }
                 }
+
                 zones.Add(zone);
             }
         }
@@ -341,8 +354,16 @@ namespace YukiDNS.DNS_CORE
 
                 for (var i = 1; i <= zds.Count; i++)
                 {
-                    var a = RRData.BuildResponse_A(query.byteData, 1, 4, zds[i - 1].Data[0].ToString());
+                    var a = RRData.BuildResponse_A(query.byteData, zds[i-1].TTL, 4, zds[i - 1].Data[0].ToString());
                     answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq=query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
                 }
 
             }
@@ -351,8 +372,16 @@ namespace YukiDNS.DNS_CORE
 
                 for (var i = 1; i <= zds.Count; i++)
                 {
-                    var a = RRData.BuildResponse_AAAA(query.byteData, 1, 16, zds[i - 1].Data[0].ToString());
+                    var a = RRData.BuildResponse_AAAA(query.byteData, zds[i-1].TTL, 16, zds[i - 1].Data[0].ToString());
                     answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
                 }
 
             }
@@ -362,8 +391,16 @@ namespace YukiDNS.DNS_CORE
                 for (var i = 1; i <= zds.Count; i++)
                 {
                     string ptr = zds[i - 1].Data[0].ToString().ToDNSName();
-                    var a = RRData.BuildResponse_PTR(query.byteData, 1, (ushort)ptr.Length, ptr);
+                    var a = RRData.BuildResponse_PTR(query.byteData, zds[i-1].TTL, (ushort)ptr.Length, ptr);
                     answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
                 }
 
             }
@@ -373,8 +410,16 @@ namespace YukiDNS.DNS_CORE
                 for (var i = 1; i <= zds.Count; i++)
                 {
                     string ptr = zds[i - 1].Data[0].ToString().ToDNSName();
-                    var a = RRData.BuildResponse_CNAME(query.byteData, 1, (ushort)ptr.Length, ptr);
+                    var a = RRData.BuildResponse_CNAME(query.byteData, zds[i-1].TTL, (ushort)ptr.Length, ptr);
                     answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
                 }
 
             }
@@ -384,8 +429,16 @@ namespace YukiDNS.DNS_CORE
                 for (var i = 1; i <= zds.Count; i++)
                 {
                     string ptr = zds[i - 1].Data[0].ToString().ToDNSName();
-                    var a = RRData.BuildResponse_NS(query.byteData, 1, (ushort)ptr.Length, ptr);
+                    var a = RRData.BuildResponse_NS(query.byteData, zds[i-1].TTL, (ushort)ptr.Length, ptr);
                     answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
                 }
 
             }
@@ -395,8 +448,16 @@ namespace YukiDNS.DNS_CORE
                 for (var i = 1; i <= zds.Count; i++)
                 {
                     string ptr = zds[i - 1].Data[1].ToString().ToDNSName();
-                    var a = RRData.BuildResponse_MX(query.byteData, 1, (ushort)(ptr.Length + 2), (ushort)zds[i - 1].Data[0], ptr);
+                    var a = RRData.BuildResponse_MX(query.byteData, zds[i-1].TTL, (ushort)(ptr.Length + 2), (ushort)zds[i - 1].Data[0], ptr);
                     answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
                 }
 
             }
@@ -406,8 +467,16 @@ namespace YukiDNS.DNS_CORE
                 for (var i = 1; i <= zds.Count; i++)
                 {
                     string ptr = zds[i - 1].Data[0].ToString();
-                    var a = RRData.BuildResponse_TXT(query.byteData, 1, (ushort)(ptr.Length + 1), (ushort)ptr.Length, ptr);
+                    var a = RRData.BuildResponse_TXT(query.byteData, zds[i-1].TTL, (ushort)(ptr.Length + 1), (ushort)ptr.Length, ptr);
                     answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
                 }
 
             }
@@ -417,8 +486,16 @@ namespace YukiDNS.DNS_CORE
                 for (var i = 1; i <= zds.Count; i++)
                 {
                     string ptr = zds[i - 1].Data[0].ToString();
-                    var a = RRData.BuildResponse_SPF(query.byteData, 1, (ushort)(ptr.Length + 1), (ushort)ptr.Length, ptr);
+                    var a = RRData.BuildResponse_SPF(query.byteData, zds[i-1].TTL, (ushort)(ptr.Length + 1), (ushort)ptr.Length, ptr);
                     answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
                 }
 
             }
@@ -429,9 +506,17 @@ namespace YukiDNS.DNS_CORE
                 {
                     string zone = zds[i - 1].Data[0].ToString().ToDNSName();
                     string mbox = zds[i - 1].Data[1].ToString().ToDNSName();
-                    var a = RRData.BuildResponse_SOA(query.byteData, 1, (ushort)(zone.Length + mbox.Length + 20),
+                    var a = RRData.BuildResponse_SOA(query.byteData, zds[i-1].TTL, (ushort)(zone.Length + mbox.Length + 20),
                         zone, mbox, (uint)zds[i - 1].Data[2], (uint)zds[i - 1].Data[3], (uint)zds[i - 1].Data[4], (uint)zds[i - 1].Data[5], (uint)zds[i - 1].Data[6]);
                     answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
                 }
 
             }
@@ -441,9 +526,17 @@ namespace YukiDNS.DNS_CORE
                 for (var i = 1; i <= zds.Count; i++)
                 {
                     string zone = zds[i - 1].Data[3].ToString().ToDNSName();
-                    var a = RRData.BuildResponse_SRV(query.byteData, 1, (ushort)(zone.Length + 6),
+                    var a = RRData.BuildResponse_SRV(query.byteData, zds[i-1].TTL, (ushort)(zone.Length + 6),
                        (ushort)zds[i - 1].Data[0], (ushort)zds[i - 1].Data[1], (ushort)zds[i - 1].Data[2], zone);
                     answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
                 }
 
             }
@@ -454,9 +547,17 @@ namespace YukiDNS.DNS_CORE
                 {
                     string zone = zds[i - 1].Data[2].ToString();
                     string tag = zds[i - 1].Data[1].ToString();
-                    var a = RRData.BuildResponse_CAA(query.byteData, 1, (ushort)(zone.Length + tag.Length + 2),
+                    var a = RRData.BuildResponse_CAA(query.byteData, zds[i-1].TTL, (ushort)(zone.Length + tag.Length + 2),
                         (ushort)zds[i - 1].Data[0], (ushort)tag.Length, tag, zone);
                     answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
                 }
 
             }
@@ -464,16 +565,32 @@ namespace YukiDNS.DNS_CORE
             {
                 for (var i = 1; i <= zds.Count; i++)
                 {
-                    var a = RRData.BuildResponse_DNSKEY(query.byteData, 1, zds[i - 1].Data);
+                    var a = RRData.BuildResponse_DNSKEY(query.byteData, zds[i-1].TTL, zds[i - 1].Data);
                     answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
                 }
             }
             else if (query.Type == QTYPES.DS)
             {
                 for (var i = 1; i <= zds.Count; i++)
                 {
-                    var a = RRData.BuildResponse_DS(query.byteData, 1, zds[i - 1].Data);
+                    var a = RRData.BuildResponse_DS(query.byteData, zds[i-1].TTL, zds[i - 1].Data);
                     answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
                 }
             }
             else

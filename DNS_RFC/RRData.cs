@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Net;
 using Newtonsoft.Json;
+using System.Text.RegularExpressions;
+using System.Reflection;
 
 namespace YukiDNS.DNS_RFC
 {
@@ -566,7 +568,7 @@ namespace YukiDNS.DNS_RFC
             return opt;
         }
 
-        public static RRData BuildResponse_DNSKEY(byte[] RR, int TTL, object[] data)
+        public static RRData BuildResponse_DNSKEY(byte[] RR, uint TTL, object[] data)
         {
             RRData ret = new RRData();
             ret.byteData = RR;
@@ -619,7 +621,7 @@ namespace YukiDNS.DNS_RFC
             return ret;
         }
 
-        public static RRData BuildResponse_DS(byte[] RR, int TTL, object[] data)
+        public static RRData BuildResponse_DS(byte[] RR, uint TTL, object[] data)
         {
             RRData ret = new RRData();
             ret.byteData = RR;
@@ -671,6 +673,102 @@ namespace YukiDNS.DNS_RFC
             return ret;
         }
 
+        public static RRData BuildResponse_RRSIG(byte[] RR,uint TTL,object[] data)
+        {
+            RRData ret = new RRData();
+            ret.byteData = RR;
+            int i = 0;
+            for (; i < RR.Length; i++)
+            {
+                if (RR[i] == 0) break;
+                ret.Name += (char)RR[i];
+            }
+
+            ret.Name = ret.Name.FromDNSName();
+
+            ret.Type = (QTYPES)(RR[i + 1] * 0x100 + RR[i + 2]);
+            ret.Class = (RRClass)(RR[i + 3] * 0x100 + RR[i + 4]);
+
+            //TTL
+            ret.byteData = ret.byteData.Append((byte)(TTL / 16777216)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 16777216 / 65536)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 65536 / 256)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 256)).ToArray();
+
+            int rdLen = 0;
+            List<byte> rdData = new List<byte>();
+
+            //RRSIG TYPE
+            QTYPES RRSIGType = Enum.Parse<QTYPES>(data[0].ToString());
+            rdData.Add((byte)((uint)RRSIGType % 65536 / 256));
+            rdData.Add((byte)((uint)RRSIGType % 256));
+
+            //RRSIG ALG
+            rdData.Add((byte)(uint)data[1]);
+
+            //RRSIG LABEL
+            string signer = $@"{data[7]}".ToDNSName();
+            rdData.Add((byte)(uint)data[2]);
+
+            //RRSIG TTL
+            uint rttl = (uint)data[3];
+
+            rdData.Add((byte)(rttl / 16777216));
+            rdData.Add((byte)(rttl % 16777216 / 65536));
+            rdData.Add((byte)(rttl % 65536 / 256));
+            rdData.Add((byte)(rttl % 256));
+
+            //RRSIG EXP
+            var dtreg = new Regex(@"^(\d{4,4})(\d{2,2})(\d{2,2})(\d{2,2})(\d{2,2})(\d{2,2})");
+            DateTime dtr = DateTime.Parse(dtreg.Replace(data[4].ToString(), @"$1-$2-$3 $4:$5:$6"));
+            uint sexp = (uint)(dtr - new DateTime(1970, 1, 1)).TotalSeconds;
+
+            rdData.Add((byte)(sexp / 16777216));
+            rdData.Add((byte)(sexp % 16777216 / 65536));
+            rdData.Add((byte)(sexp % 65536 / 256));
+            rdData.Add((byte)(sexp % 256));
+
+            //RRSIG SIGTIME
+            DateTime dts = DateTime.Parse(dtreg.Replace(data[5].ToString(), @"$1-$2-$3 $4:$5:$6"));
+            uint ssig = (uint)(dts - new DateTime(1970, 1, 1)).TotalSeconds;
+
+            rdData.Add((byte)(ssig / 16777216));
+            rdData.Add((byte)(ssig % 16777216 / 65536));
+            rdData.Add((byte)(ssig % 65536 / 256));
+            rdData.Add((byte)(ssig % 256));
+
+            //RRSIG TAG
+            rdData.Add((byte)((uint)data[1] % 65536 / 256));
+            rdData.Add((byte)((uint)data[1] % 256));
+
+            //RRSIG SIGNER
+            foreach(var c in signer)
+            {
+                rdData.Add((byte)c);
+            }
+
+            //RRSIG SIGNATURE
+            string signature = $@"{data[8]}{data[9]}";
+            byte[] byteKey = Convert.FromBase64String(signature);
+            for (var j = 0; j < byteKey.Length; j++)
+            {
+                rdData.Add((byte)(uint)byteKey[j]);
+            }
+
+            rdLen = rdData.Count;
+
+            //RD Length
+            ret.byteData = ret.byteData.Append((byte)(rdLen / 256)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(rdLen % 256)).ToArray();
+
+            for (var j = 0; j < rdLen; j++)
+            {
+                ret.byteData = ret.byteData.Append(rdData[j]).ToArray();
+            }
+
+            return ret;
+
+        }
     }
 
     public class RROPTData

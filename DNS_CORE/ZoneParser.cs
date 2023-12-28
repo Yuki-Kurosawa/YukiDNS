@@ -55,13 +55,13 @@ namespace YukiDNS.DNS_CORE
                 case QTYPES.SPF:
                     string argv = "";
 
-                    foreach(var v in args.Skip(4))
+                    foreach (var v in args.Skip(4))
                     {
                         argv += v + " ";
                     }
 
-                    argv=argv.Trim();
-                    argv=argv.Trim('"');
+                    argv = argv.Trim();
+                    argv = argv.Trim('"');
 
                     return new ZoneData()
                     {
@@ -92,7 +92,7 @@ namespace YukiDNS.DNS_CORE
                         Name = name,
                         TTL = ttl,
                         Type = type,
-                        Data = new object[] {  args[4], args[5], uint.Parse(args[6]), uint.Parse(args[7]), uint.Parse(args[8]), uint.Parse(args[9]), uint.Parse(args[10]) }
+                        Data = new object[] { args[4], args[5], uint.Parse(args[6]), uint.Parse(args[7]), uint.Parse(args[8]), uint.Parse(args[9]), uint.Parse(args[10]) }
                     };
                 case QTYPES.DNSKEY:
                     return new ZoneData()
@@ -109,6 +109,14 @@ namespace YukiDNS.DNS_CORE
                         TTL = ttl,
                         Type = type,
                         Data = new object[] { uint.Parse(args[4]), uint.Parse(args[5]), uint.Parse(args[6]), args[7], args[8] }
+                    };
+                case QTYPES.RRSIG:
+                    return new ZoneData()
+                    {
+                        Name = name,
+                        TTL = ttl,
+                        Type = type,
+                        Data = new object[] { Enum.Parse<QTYPES>(args[4]), uint.Parse(args[5]), uint.Parse(args[6]), uint.Parse(args[7]), args[8], args[9], args[10], args[11], args[12], args[13] }
                     };
                 default:
                     throw new Exception("RR Data Format Error");
