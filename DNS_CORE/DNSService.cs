@@ -287,7 +287,7 @@ namespace YukiDNS.DNS_CORE
 
                         if (zds.Where(q => q.Type == QTYPES.CNAME && dret.RRQueries[0].Type != QTYPES.CNAME).Any())
                         {
-                            var nq = dret.RRQueries[0].ChangeQueryType(QTYPES.CNAME,selected.Name);
+                            var nq = dret.RRQueries[0].ChangeQueryType(QTYPES.CNAME, s.Replace("@","") + "." + selected.Name.TrimStart('.'));
                             answers = BuildResponse(nq, zds);
                             var cname = zds[0].Data[0].ToString();
                             var dnsq = new DNSRequest();
@@ -360,9 +360,9 @@ namespace YukiDNS.DNS_CORE
                     if (zds[i - 1].RRSIG != null)
                     {
                         var sig = zds[i - 1].RRSIG;
-                        var sigq=query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var sigq=query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
-                        answers.Add(b);
+                        //answers.Add(b);
                     }
                 }
 
@@ -378,7 +378,7 @@ namespace YukiDNS.DNS_CORE
                     if (zds[i - 1].RRSIG != null)
                     {
                         var sig = zds[i - 1].RRSIG;
-                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i-1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
                         answers.Add(b);
                     }
@@ -397,7 +397,7 @@ namespace YukiDNS.DNS_CORE
                     if (zds[i - 1].RRSIG != null)
                     {
                         var sig = zds[i - 1].RRSIG;
-                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
                         answers.Add(b);
                     }
@@ -416,7 +416,7 @@ namespace YukiDNS.DNS_CORE
                     if (zds[i - 1].RRSIG != null)
                     {
                         var sig = zds[i - 1].RRSIG;
-                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
                         answers.Add(b);
                     }
@@ -435,7 +435,7 @@ namespace YukiDNS.DNS_CORE
                     if (zds[i - 1].RRSIG != null)
                     {
                         var sig = zds[i - 1].RRSIG;
-                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
                         answers.Add(b);
                     }
@@ -454,7 +454,7 @@ namespace YukiDNS.DNS_CORE
                     if (zds[i - 1].RRSIG != null)
                     {
                         var sig = zds[i - 1].RRSIG;
-                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
                         answers.Add(b);
                     }
@@ -473,7 +473,7 @@ namespace YukiDNS.DNS_CORE
                     if (zds[i - 1].RRSIG != null)
                     {
                         var sig = zds[i - 1].RRSIG;
-                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
                         answers.Add(b);
                     }
@@ -492,7 +492,7 @@ namespace YukiDNS.DNS_CORE
                     if (zds[i - 1].RRSIG != null)
                     {
                         var sig = zds[i - 1].RRSIG;
-                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
                         answers.Add(b);
                     }
@@ -513,7 +513,7 @@ namespace YukiDNS.DNS_CORE
                     if (zds[i - 1].RRSIG != null)
                     {
                         var sig = zds[i - 1].RRSIG;
-                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
                         answers.Add(b);
                     }
@@ -533,7 +533,7 @@ namespace YukiDNS.DNS_CORE
                     if (zds[i - 1].RRSIG != null)
                     {
                         var sig = zds[i - 1].RRSIG;
-                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
                         answers.Add(b);
                     }
@@ -554,7 +554,7 @@ namespace YukiDNS.DNS_CORE
                     if (zds[i - 1].RRSIG != null)
                     {
                         var sig = zds[i - 1].RRSIG;
-                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
                         answers.Add(b);
                     }
@@ -571,7 +571,7 @@ namespace YukiDNS.DNS_CORE
                     if (zds[i - 1].RRSIG != null)
                     {
                         var sig = zds[i - 1].RRSIG;
-                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
                         answers.Add(b);
                     }
@@ -587,7 +587,7 @@ namespace YukiDNS.DNS_CORE
                     if (zds[i - 1].RRSIG != null)
                     {
                         var sig = zds[i - 1].RRSIG;
-                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, sig.Name);
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
                         var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
                         answers.Add(b);
                     }

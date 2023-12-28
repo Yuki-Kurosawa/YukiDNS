@@ -17,6 +17,8 @@ namespace YukiDNS.DNS_CORE
 
         public object[] Data { get; set; }
 
+        public string ZoneName { get; set; }
+
         public ZoneData RRSIG { get; set; }
     
     }
