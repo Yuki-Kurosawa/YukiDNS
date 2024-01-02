@@ -206,7 +206,7 @@ namespace YukiDNS.DNS_CORE
             if (selected == null)
             {
                 dret.ReplyCode = (ushort)ReplyCode.REFUSED;
-                dret.Answer = 0;                
+                dret.Answer = 0;
 
                 return dret;
             }
@@ -287,14 +287,14 @@ namespace YukiDNS.DNS_CORE
 
                         if (zds.Where(q => q.Type == QTYPES.CNAME && dret.RRQueries[0].Type != QTYPES.CNAME).Any())
                         {
-                            var nq = dret.RRQueries[0].ChangeQueryType(QTYPES.CNAME, s.Replace("@","") + "." + selected.Name.TrimStart('.'));
+                            var nq = dret.RRQueries[0].ChangeQueryType(QTYPES.CNAME, s.Replace("@", "") + "." + selected.Name.TrimStart('.'));
                             answers = BuildResponse(nq, zds);
                             var cname = zds[0].Data[0].ToString();
                             var dnsq = new DNSRequest();
                             dnsq.RRQueries = new RRQuery[1];
                             dnsq.Query = 1;
                             dnsq.RRQueries[0] = dret.RRQueries[0].ChangeName(cname);
-                            answers.AddRange(Resolve(dnsq).RRAnswer??new RRData[0]);
+                            answers.AddRange(Resolve(dnsq).RRAnswer ?? new RRData[0]);
                         }
                         else
                         {
@@ -330,13 +330,35 @@ namespace YukiDNS.DNS_CORE
                 }
             }
 
-            //ADD SOA RR for All Records
+            //ADD SOA RR and NSEC for All Records
             {
                 var zsoas = selected.Data.Where(data => data.Type == QTYPES.SOA && data.Name == "@").ToList();
 
                 var nq = dret.RRQueries[0].ChangeQueryType(QTYPES.SOA, selected.Name);
 
                 List<RRData> soas = BuildResponse(nq, zsoas);
+
+                if (dret.ReplyCode != (ushort)ReplyCode.NXDOMAIN)
+                {
+
+                    List<ZoneData> zds = null;
+
+                    if (!any)
+                    {
+                        zds = selected.Data.Where(data => data.Type == QTYPES.NSEC && data.Name == qs[0]).ToList();
+                    }
+                    else
+                    {
+                        zds = selected.Data.Where(data => data.Type == QTYPES.NSEC && data.Name == "*").ToList();
+                    }
+
+                    var sq = dret.RRQueries[0].ChangeQueryType(QTYPES.NSEC, selected.Name);
+                    soas.AddRange(BuildResponse(sq, zds));
+                }
+
+                
+
+
                 if (soas.Any())
                 {
                     dret.Authority = (ushort)soas.Count;
