@@ -36,7 +36,7 @@ namespace YukiDNS.DNS_CORE
         public static void LoadZoneFiles()
         {
             string basePath = "zones";
-            string[] fs = Directory.GetFiles(basePath,"e1_ksyuki_com.zone");
+            string[] fs = Directory.GetFiles(basePath,"*.zone");
 
             foreach (string file in fs)
             {
@@ -56,7 +56,7 @@ namespace YukiDNS.DNS_CORE
 
                     try
                     {
-                        ZoneData data1 = ZoneParser.ParseLine(line2, "e1.ksyuki.com");
+                        ZoneData data1 = ZoneParser.ParseLine(line2, fn);
                         if (data1.Type != QTYPES.RRSIG)
                         {
                             zone.Data.Add(data1);
@@ -163,6 +163,12 @@ namespace YukiDNS.DNS_CORE
             while (selected == null && !string.IsNullOrEmpty(zoneName))
             {
                 var zone = zones.Where(k => k.Name == zoneName.TrimEnd('.')).ToList();
+
+                if (dns.RRQueries[0].Type==QTYPES.DS)
+                {
+                    zone = zones.Where(k => k.Name == zoneName.Substring(zoneName.IndexOf('.') + 1, zoneName.Length - zoneName.IndexOf('.') - 1).TrimEnd('.')).ToList();
+                }
+
                 if (zone.Count > 0)
                 {
                     selected = zone[0];
