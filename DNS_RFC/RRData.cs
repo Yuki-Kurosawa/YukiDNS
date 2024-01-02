@@ -821,18 +821,22 @@ namespace YukiDNS.DNS_RFC
 
             for (int wi = 0; wi < 2; wi++)
             {
-                rdData.Add((byte)wi);
+                
 
                 int lastBlock = 31;
+                bool found = false;
 
                 for (int lb = lastBlock; lb >= 0; lb--)
                 {
                     if (blocks[wi, lb] != 0)
                     {
-                        lastBlock = lb; break;
+                        lastBlock = lb; found = true; break;
                     }
                 }
 
+                if (!found) break;
+
+                rdData.Add((byte)wi);
                 rdData.Add((byte)(lastBlock + 1));
                 for (int r0 = 0; r0 < lastBlock + 1; r0++)
                 {
