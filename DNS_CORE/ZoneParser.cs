@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Org.BouncyCastle.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using YukiDNS.DNS_RFC;
 
 namespace YukiDNS.DNS_CORE
@@ -127,6 +129,24 @@ namespace YukiDNS.DNS_CORE
                         Data = new object[] { Enum.Parse<QTYPES>(args[4]), uint.Parse(args[5]), uint.Parse(args[6]), uint.Parse(args[7]), args[8], args[9], uint.Parse(args[10]), args[11], args[12], args[13] },
                         ZoneName = zoneName
                     };
+                case QTYPES.NSEC:
+                    {
+                        var data = new ZoneData()
+                        {
+                            Name = name,
+                            TTL = ttl,
+                            Type = type,
+                            ZoneName = zoneName
+                        };
+                        var objects=new List<object>();
+                        objects.Add(args[4]);
+                        foreach (var obj in args.Skip(5))
+                        {
+                            objects.Add(Enum.Parse<QTYPES>(obj));
+                        }
+                        data.Data = objects.ToArray();
+                        return data;
+                    }
                 default:
                     throw new Exception("RR Data Format Error");
             }

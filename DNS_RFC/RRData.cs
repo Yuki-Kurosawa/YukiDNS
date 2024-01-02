@@ -769,6 +769,92 @@ namespace YukiDNS.DNS_RFC
             return ret;
 
         }
+
+        internal static RRData BuildResponse_NSEC(byte[] RR, uint TTL, object[] data)
+        {
+            RRData ret = new RRData();
+            ret.byteData = RR;
+            int i = 0;
+            for (; i < RR.Length; i++)
+            {
+                if (RR[i] == 0) break;
+                ret.Name += (char)RR[i];
+            }
+
+            ret.Name = ret.Name.FromDNSName();
+
+            ret.Type = (QTYPES)(RR[i + 1] * 0x100 + RR[i + 2]);
+            ret.Class = (RRClass)(RR[i + 3] * 0x100 + RR[i + 4]);
+
+            //TTL
+            ret.byteData = ret.byteData.Append((byte)(TTL / 16777216)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 16777216 / 65536)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 65536 / 256)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(TTL % 256)).ToArray();
+
+            int rdLen = 0;
+            List<byte> rdData = new List<byte>();
+
+            //NSEC TAG
+            var signer = data[0].ToString().ToDNSName();
+            foreach (var c in signer)
+            {
+                rdData.Add((byte)c);
+            }
+
+
+            //NSEC TYPES
+            byte[,] blocks = new byte[2,32];
+
+            foreach (var q in data.Skip(1))
+            {
+                QTYPES t = (QTYPES)q;
+                int v = (int)t;
+
+                int windowNo = v / 256;
+                int blockNo = (v % 256) / 8;
+                int bitNo = 7 - (v % 256) % 8;
+
+                blocks[windowNo, blockNo] |= (byte)Math.Pow(2, bitNo);
+            }
+
+
+            for (int wi = 0; wi < 2; wi++)
+            {
+                rdData.Add((byte)wi);
+
+                int lastBlock = 31;
+
+                for (int lb = lastBlock; lb >= 0; lb--)
+                {
+                    if (blocks[wi, lb] != 0)
+                    {
+                        lastBlock = lb; break;
+                    }
+                }
+
+                rdData.Add((byte)(lastBlock + 1));
+                for (int r0 = 0; r0 < lastBlock + 1; r0++)
+                {
+                    rdData.Add(blocks[wi, r0]);
+                }
+
+            }
+
+
+            rdLen = rdData.Count;
+
+            //RD Length
+            ret.byteData = ret.byteData.Append((byte)(rdLen / 256)).ToArray();
+            ret.byteData = ret.byteData.Append((byte)(rdLen % 256)).ToArray();
+
+            for (var j = 0; j < rdLen; j++)
+            {
+                ret.byteData = ret.byteData.Append(rdData[j]).ToArray();
+            }
+
+            return ret;
+        }
     }
 
     public class RROPTData
