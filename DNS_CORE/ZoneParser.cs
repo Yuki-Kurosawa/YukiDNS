@@ -22,7 +22,7 @@ namespace YukiDNS.DNS_CORE
 
             if (name.Contains(zoneName + "."))
             {
-                name = name.Replace(zoneName + ".", "").Trim('.');
+                name = name.Replace(zoneName + ".", "").Trim('.').ToLower();
             }
 
             if(string.IsNullOrEmpty(name))
@@ -142,6 +142,45 @@ namespace YukiDNS.DNS_CORE
                         var objects=new List<object>();
                         objects.Add(args[4]);
                         foreach (var obj in args.Skip(5))
+                        {
+                            objects.Add(Enum.Parse<QTYPES>(obj));
+                        }
+                        data.Data = objects.ToArray();
+                        return data;
+                    }
+                case QTYPES.NSEC3PARAM:
+                    {
+                        var data = new ZoneData()
+                        {
+                            Name = name,
+                            TTL = ttl,
+                            Type = type,
+                            ZoneName = zoneName
+                        };
+                        var objects = new List<object>();
+                        objects.Add(uint.Parse(args[4]));
+                        objects.Add(uint.Parse(args[5]));
+                        objects.Add(uint.Parse(args[6]));
+                        objects.Add(args[7]);
+                        data.Data = objects.ToArray();
+                        return data;
+                    }
+                case QTYPES.NSEC3:
+                    {
+                        var data = new ZoneData()
+                        {
+                            Name = name,
+                            TTL = ttl,
+                            Type = type,
+                            ZoneName = zoneName
+                        };
+                        var objects = new List<object>();
+                        objects.Add(uint.Parse(args[4]));
+                        objects.Add(uint.Parse(args[5]));
+                        objects.Add(uint.Parse(args[6]));
+                        objects.Add(args[7]);
+                        objects.Add(args[8]);
+                        foreach (var obj in args.Skip(9))
                         {
                             objects.Add(Enum.Parse<QTYPES>(obj));
                         }

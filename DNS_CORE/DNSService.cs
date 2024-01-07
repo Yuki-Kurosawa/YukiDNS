@@ -604,6 +604,38 @@ namespace YukiDNS.DNS_CORE
                     }
                 }
             }
+            else if (query.Type == QTYPES.NSEC3PARAM)
+            {
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    var a = RRData.BuildResponse_NSEC3PARAM(query.byteData, zds[i - 1].TTL, zds[i - 1].Data);
+                    answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
+                }
+            }
+            else if (query.Type == QTYPES.NSEC3)
+            {
+                for (var i = 1; i <= zds.Count; i++)
+                {
+                    var a = RRData.BuildResponse_NSEC3(query.byteData, zds[i - 1].TTL, zds[i - 1].Data);
+                    answers.Add(a);
+
+                    if (zds[i - 1].RRSIG != null)
+                    {
+                        var sig = zds[i - 1].RRSIG;
+                        var sigq = query.ChangeQueryType(QTYPES.RRSIG, zds[i - 1].Name.Replace("@", "") + "." + zds[i - 1].ZoneName.TrimStart('.'));
+                        var b = RRData.BuildResponse_RRSIG(sigq.byteData, sig.TTL, sig.Data);
+                        answers.Add(b);
+                    }
+                }
+            }
             else
             {
                 throw new Exception("NOTIMP");

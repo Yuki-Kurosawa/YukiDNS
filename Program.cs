@@ -37,7 +37,7 @@ namespace YukiDNS
             }
             else if (args[0] == "zone")
             {
-                string[] data = File.ReadAllLines(@"zones\e1_ksyuki_com.zone");
+                string[] data = File.ReadAllLines(@"zones\e1.ksyuki.com.flat.zone");
 
                 ZoneArea zone = ZoneParser.ParseArea("e1.ksyuki.com", data);
 
