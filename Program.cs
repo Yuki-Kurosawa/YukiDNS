@@ -21,6 +21,8 @@ using System.Text;
 using YukiDNS.DNS_CORE;
 using YukiDNS.CA_CORE;
 using YukiDNS.DNS_RFC;
+using Org.BouncyCastle.Utilities;
+using Org.BouncyCastle.Tls.Crypto.Impl.BC;
 
 namespace YukiDNS
 {
@@ -37,40 +39,9 @@ namespace YukiDNS
             {
                 string[] data = File.ReadAllLines(@"zones\e1_ksyuki_com.zone");
 
-                List<ZoneData> list = new List<ZoneData>();
+                ZoneArea zone = ZoneParser.ParseArea("e1.ksyuki.com", data);
 
-                foreach (string line in data)
-                {
-                    if (string.IsNullOrEmpty(line)) continue;
-                    var line2 = line.Replace("\t", " ");
-
-                    while(line2.Contains("  "))
-                    {
-                        line2=line2.Replace("  ", " ");
-                    }
-
-
-                    try
-                    {
-                        ZoneData data1=ZoneParser.ParseLine(line2,"e1.ksyuki.com");
-                        if (data1.Type != QTYPES.RRSIG)
-                        {
-                            list.Add(data1);
-                        }
-                        else
-                        {
-                            var ql = list.Where(q => q.Type == (QTYPES)data1.Data[0] && q.Name == data1.Name).ToList();
-                            if (ql.Count > 0)
-                            {
-                                ql[0].RRSIG = data1;
-                            }
-                        }
-                    }
-                    catch(Exception ex)
-                    {
-                        Console.WriteLine(ex.Message+":"+line2.Split(' ')[3]);
-                    }
-                }
+                List<ZoneData> list = zone.Data;
 
                 foreach (var data1 in list)
                 {

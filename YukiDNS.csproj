@@ -18,6 +18,9 @@
     <None Update="conf\ca.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="zones\e1.ksyuki.com.flat.zone">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="zones\e1_ksyuki_com.zone">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

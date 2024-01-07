@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using YukiDNS.DNS_RFC;
@@ -151,6 +152,47 @@ namespace YukiDNS.DNS_CORE
                     throw new Exception("RR Data Format Error");
             }
 
+        }
+    
+        public static ZoneArea ParseArea(string zoneName, string[] zoneData)
+        {
+            ZoneArea zone = new ZoneArea(zoneName);
+
+            foreach (string line in zoneData)
+            {
+                var rrLine = new Regex("[;]{1,}.*$").Replace(line, string.Empty);// Remove All Comments From RR Data Lines
+                if (string.IsNullOrEmpty(rrLine)) continue;
+
+                var line2 = line.Replace("\t", " ");
+
+                while (line2.Contains("  "))
+                {
+                    line2 = line2.Replace("  ", " ");
+                }
+
+                try
+                {
+                    ZoneData data1 = ZoneParser.ParseLine(line2, zoneName);
+                    if (data1.Type != QTYPES.RRSIG)
+                    {
+                        zone.Data.Add(data1);
+                    }
+                    else
+                    {
+                        var ql = zone.Data.Where(q => q.Type == (QTYPES)data1.Data[0] && q.Name == data1.Name).ToList();
+                        if (ql.Count > 0)
+                        {
+                            ql[0].RRSIG = data1;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message + ":" + line2.Split(' ')[3]);
+                }
+            }
+
+            return zone;
         }
     }
 }

@@ -36,45 +36,15 @@ namespace YukiDNS.DNS_CORE
         public static void LoadZoneFiles()
         {
             string basePath = "zones";
-            string[] fs = Directory.GetFiles(basePath,"*.zone");
+            string[] fs = Directory.GetFiles(basePath,"*.flat.zone");
 
             foreach (string file in fs)
             {
-                string fn = new FileInfo(file).Name.Replace(".zone", "").Replace("_", ".");
-                ZoneArea zone = new ZoneArea(fn);
+                string fn = new FileInfo(file).Name.Replace(".flat.zone", "").Replace("_", ".");
+                
                 string[] lines = File.ReadAllLines(file);
 
-                foreach (string line in lines)
-                {
-                    if (string.IsNullOrEmpty(line)) continue;
-                    var line2 = line.Replace("\t", " ");
-
-                    while (line2.Contains("  "))
-                    {
-                        line2 = line2.Replace("  ", " ");
-                    }
-
-                    try
-                    {
-                        ZoneData data1 = ZoneParser.ParseLine(line2, fn);
-                        if (data1.Type != QTYPES.RRSIG)
-                        {
-                            zone.Data.Add(data1);
-                        }
-                        else
-                        {
-                            var ql = zone.Data.Where(q => q.Type == (QTYPES)data1.Data[0] && q.Name == data1.Name).ToList();
-                            if (ql.Count > 0)
-                            {
-                                ql[0].RRSIG = data1;
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message + ":" + line2.Split(' ')[3]);
-                    }
-                }
+                ZoneArea zone = ZoneParser.ParseArea(fn,lines);
 
                 zones.Add(zone);
             }
@@ -360,10 +330,7 @@ namespace YukiDNS.DNS_CORE
 
                     var sq = dret.RRQueries[0].ChangeQueryType(QTYPES.NSEC, selected.Name);
                     soas.AddRange(BuildResponse(sq, zds));
-                }
-
-                
-
+                }     
 
                 if (soas.Any())
                 {
