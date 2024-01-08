@@ -269,12 +269,12 @@ namespace YukiDNS.DNS_CORE
             return zone;
         }
 
-        private static byte[] ComputeZoneNameHash(uint hashAlgorithm,string ownerName,uint iterations, string saltHex)
+        private static byte[] ComputeZoneNameHash(uint hashAlgorithm, string ownerName, uint iterations, string saltHex)
         {
             HashAlgorithm hash;
 
-            List<byte> saltByte=new List<byte>();
-            for(int i=0;i<saltHex.Length;i+=2)
+            List<byte> saltByte = new List<byte>();
+            for (int i = 0; i < saltHex.Length; i += 2)
             {
                 saltByte.Add(Convert.ToByte(saltHex[i].ToString() + saltHex[i + 1].ToString(), 16));
             }
@@ -284,7 +284,7 @@ namespace YukiDNS.DNS_CORE
 
             string ownerNameDNS = ownerName.ToDNSName();
             List<byte> ownerNameBytes = new List<byte>();
-            foreach(char k in ownerNameDNS)
+            foreach (char k in ownerNameDNS)
             {
                 ownerNameBytes.Add((byte)k);
             }
@@ -305,7 +305,7 @@ namespace YukiDNS.DNS_CORE
             {
                 using (MemoryStream mS = new MemoryStream(Math.Max(ownerName.Length, hash.HashSize / 8)))
                 {
-                    mS.Write(ownerNameBytes.ToArray(),0,ownerNameBytes.Count);
+                    mS.Write(ownerNameBytes.ToArray(), 0, ownerNameBytes.Count);
                     mS.Write(salt);
 
                     mS.Position = 0;
