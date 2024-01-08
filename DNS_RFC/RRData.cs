@@ -820,8 +820,7 @@ namespace YukiDNS.DNS_RFC
 
 
             for (int wi = 0; wi < 2; wi++)
-            {
-                
+            {                
 
                 int lastBlock = 31;
                 bool found = false;
@@ -961,7 +960,46 @@ namespace YukiDNS.DNS_RFC
 
             rdData.AddRange(bhash);
 
-            
+            //NSEC3 TYPES
+            byte[,] blocks = new byte[2, 32];
+
+            foreach (var q in data.Skip(5))
+            {
+                QTYPES t = (QTYPES)q;
+                int v = (int)t;
+
+                int windowNo = v / 256;
+                int blockNo = (v % 256) / 8;
+                int bitNo = 7 - (v % 256) % 8;
+
+                blocks[windowNo, blockNo] |= (byte)Math.Pow(2, bitNo);
+            }
+
+
+            for (int wi = 0; wi < 2; wi++)
+            {
+
+                int lastBlock = 31;
+                bool found = false;
+
+                for (int lb = lastBlock; lb >= 0; lb--)
+                {
+                    if (blocks[wi, lb] != 0)
+                    {
+                        lastBlock = lb; found = true; break;
+                    }
+                }
+
+                if (!found) break;
+
+                rdData.Add((byte)wi);
+                rdData.Add((byte)(lastBlock + 1));
+                for (int r0 = 0; r0 < lastBlock + 1; r0++)
+                {
+                    rdData.Add(blocks[wi, r0]);
+                }
+
+            }
 
             rdLen = rdData.Count;
 
