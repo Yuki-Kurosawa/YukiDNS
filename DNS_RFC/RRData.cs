@@ -952,11 +952,14 @@ namespace YukiDNS.DNS_RFC
                 rdData.Add((byte)Convert.ToByte(salt[j].ToString() + salt[j + 1].ToString(), 16));
             }
 
-            string hash = "ns1.e1.ksyuki.com";//data[4].ToString();
+            string hash = data[4].ToString();
+            byte[] nextHashedOwnerName = Base32.FromBase32HexString(hash);
 
-            rdData.Add((byte)Encoding.ASCII.GetBytes(hash).Length);
+            byte[] bhash = nextHashedOwnerName;
 
-            rdData.AddRange(Encoding.ASCII.GetBytes(hash));
+            rdData.Add((byte)bhash.Length);
+
+            rdData.AddRange(bhash);
 
             
 
