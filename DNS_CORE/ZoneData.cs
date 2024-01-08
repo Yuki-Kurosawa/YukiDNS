@@ -20,6 +20,8 @@ namespace YukiDNS.DNS_CORE
         public string ZoneName { get; set; }
 
         public ZoneData RRSIG { get; set; }
+
+        public string NSEC3Name { get; set; }
     
     }
 

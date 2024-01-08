@@ -224,10 +224,41 @@ namespace YukiDNS.DNS_CORE
                             ql[0].RRSIG = data1;
                         }
                     }
+
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex.Message + ":" + line2.Split(' ')[3]);
+                }
+
+                
+            }
+
+            if (zone.Data.Count > 0)
+            {
+                //Add NSEC3 Name
+                List<ZoneData> nsec3rrs = zone.Data.Where(q => q.Type == QTYPES.NSEC3).ToList();
+
+                if (nsec3rrs.Count > 0)
+                {
+
+                    string current = zone.Data[0].Name;
+                    int nsec3index = 0;
+                    for (int i = 0; i < zone.Data.Count; i++)
+                    {
+                        if (zone.Data[i].Type == QTYPES.NSEC3) continue;
+
+                        if (zone.Data[i].Name== current)
+                        {
+                            zone.Data[i].NSEC3Name = nsec3rrs[nsec3index].Name;
+                        }
+                        else
+                        {
+                            current = zone.Data[i].Name;
+                            nsec3index++;
+                            zone.Data[i].NSEC3Name = nsec3rrs[nsec3index].Name;
+                        }
+                    }
                 }
             }
 

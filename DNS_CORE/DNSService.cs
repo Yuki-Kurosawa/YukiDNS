@@ -112,7 +112,7 @@ namespace YukiDNS.DNS_CORE
             dret.IsAuthority = true;
             dret.Z = false;
 
-
+            List<string> nsec3Names= new List<string>();
 
             ZoneArea selected = null;
             string Name = "";
@@ -256,6 +256,11 @@ namespace YukiDNS.DNS_CORE
 
                 if (zds.Any())
                 {
+                    if (!nsec3Names.Contains(zds[0].NSEC3Name))
+                    {
+                        nsec3Names.Add(zds[0].NSEC3Name);
+                    }
+
                     try
                     {
 
@@ -306,7 +311,7 @@ namespace YukiDNS.DNS_CORE
                 }
             }
 
-            //ADD SOA RR and NSEC for All Records
+            //ADD SOA RR and NSEC and NSEC3 for All Records
             {
                 var zsoas = selected.Data.Where(data => data.Type == QTYPES.SOA && data.Name == "@").ToList();
 
@@ -330,7 +335,57 @@ namespace YukiDNS.DNS_CORE
 
                     var sq = dret.RRQueries[0].ChangeQueryType(QTYPES.NSEC, selected.Name);
                     soas.AddRange(BuildResponse(sq, zds));
-                }     
+
+                }
+
+                if (dret.ReplyCode != (ushort)ReplyCode.NXDOMAIN)
+                {
+
+                    List<ZoneData> zds = null;
+
+                    var dnsName = selected.Name.ToDNSName();
+
+                    List<byte> dn = new List<byte>();
+                    for (int i = 0; i < dnsName.Length; i++)
+                    {
+                        dn.Add((byte)dnsName[i]);
+                    }
+
+                    if (nsec3Names.Any())
+                    {
+                        foreach (var r in nsec3Names)
+                        {
+                            zds = selected.Data.Where(data => data.Type == QTYPES.NSEC3 && data.Name == r).ToList();
+
+                            var sq = dret.RRQueries[0].ChangeQueryType(QTYPES.NSEC3, r + "." + selected.Name);
+                            soas.AddRange(BuildResponse(sq, zds));
+                        }
+                    }
+                    else
+                    {
+                        var nr = selected.Data.Where(data => data.Type == QTYPES.NSEC3).ToList();
+
+                        foreach (var n in nr)
+                        {
+                            string r = n.Name;
+                            zds = selected.Data.Where(data => data.Type == QTYPES.NSEC3 && data.Name == r).ToList();
+
+                            var sq = dret.RRQueries[0].ChangeQueryType(QTYPES.NSEC3, r + "." + selected.Name);
+                            soas.AddRange(BuildResponse(sq, zds));
+                        }
+                    }
+
+                    foreach (var r in zsoas)
+                    {
+                        if (!nsec3Names.Contains(r.NSEC3Name))
+                        {
+                            zds = selected.Data.Where(data => data.Type == QTYPES.NSEC3 && data.Name == r.NSEC3Name).ToList();
+                            var sq = dret.RRQueries[0].ChangeQueryType(QTYPES.NSEC3, r.NSEC3Name + "." + selected.Name);
+                            soas.AddRange(BuildResponse(sq, zds));
+                        }
+                    }
+
+                }
 
                 if (soas.Any())
                 {
