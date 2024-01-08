@@ -1,7 +1,11 @@
-﻿using Org.BouncyCastle.Utilities;
+﻿using Newtonsoft.Json;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Utilities;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -238,31 +242,89 @@ namespace YukiDNS.DNS_CORE
             {
                 //Add NSEC3 Name
                 List<ZoneData> nsec3rrs = zone.Data.Where(q => q.Type == QTYPES.NSEC3).ToList();
+                List<ZoneData> nsec3params=zone.Data.Where(q=>q.Type == QTYPES.NSEC3PARAM).ToList();
+                object[] nsec3param = null;
 
-                if (nsec3rrs.Count > 0)
+                if(nsec3params.Count > 0)
+                {
+                    nsec3param = nsec3params[0].Data;
+                }     
+
+                if (nsec3param != null && nsec3rrs.Count > 0)
                 {
 
                     string current = zone.Data[0].Name;
-                    int nsec3index = 0;
                     for (int i = 0; i < zone.Data.Count; i++)
                     {
+                        string dnsName = (zone.Data[i].Name.Replace("@", "") + "." + zone.Name).Trim('.');
                         if (zone.Data[i].Type == QTYPES.NSEC3) continue;
 
-                        if (zone.Data[i].Name== current)
-                        {
-                            zone.Data[i].NSEC3Name = nsec3rrs[nsec3index].Name;
-                        }
-                        else
-                        {
-                            current = zone.Data[i].Name;
-                            nsec3index++;
-                            zone.Data[i].NSEC3Name = nsec3rrs[nsec3index].Name;
-                        }
+                        string hash = Base32.ToBase32HexString(ComputeZoneNameHash((uint)nsec3param[0], dnsName, (uint)nsec3param[2], nsec3param[3].ToString()));
+
+                        zone.Data[i].NSEC3Name = hash;
                     }
                 }
             }
 
             return zone;
+        }
+
+        private static byte[] ComputeZoneNameHash(uint hashAlgorithm,string ownerName,uint iterations, string saltHex)
+        {
+            HashAlgorithm hash;
+
+            List<byte> saltByte=new List<byte>();
+            for(int i=0;i<saltHex.Length;i+=2)
+            {
+                saltByte.Add(Convert.ToByte(saltHex[i].ToString() + saltHex[i + 1].ToString(), 16));
+            }
+
+            byte[] salt = saltByte.ToArray();
+
+
+            string ownerNameDNS = ownerName.ToDNSName();
+            List<byte> ownerNameBytes = new List<byte>();
+            foreach(char k in ownerNameDNS)
+            {
+                ownerNameBytes.Add((byte)k);
+            }
+
+            switch (hashAlgorithm)
+            {
+                case 1:
+                    hash = SHA1.Create();
+                    break;
+
+                default:
+                    throw new NotSupportedException("NSEC3 hash algorithm is not supported: " + hashAlgorithm.ToString());
+            }
+
+            byte[] x;
+
+            using (hash)
+            {
+                using (MemoryStream mS = new MemoryStream(Math.Max(ownerName.Length, hash.HashSize / 8)))
+                {
+                    mS.Write(ownerNameBytes.ToArray(),0,ownerNameBytes.Count);
+                    mS.Write(salt);
+
+                    mS.Position = 0;
+                    x = hash.ComputeHash(mS);
+
+                    for (int i = 0; i < iterations; i++)
+                    {
+                        mS.SetLength(0);
+
+                        mS.Write(x);
+                        mS.Write(salt);
+
+                        mS.Position = 0;
+                        x = hash.ComputeHash(mS);
+                    }
+                }
+            }
+
+            return x;
         }
     }
 }
