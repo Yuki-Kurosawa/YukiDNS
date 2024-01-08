@@ -351,17 +351,17 @@ namespace YukiDNS.DNS_CORE
                         dn.Add((byte)dnsName[i]);
                     }
 
-                    if (nsec3Names.Any())
-                    {
-                        foreach (var r in nsec3Names)
-                        {
-                            zds = selected.Data.Where(data => data.Type == QTYPES.NSEC3 && data.Name == r).ToList();
+                    //if (nsec3Names.Any())
+                    //{
+                    //    foreach (var r in nsec3Names)
+                    //    {
+                    //        zds = selected.Data.Where(data => data.Type == QTYPES.NSEC3 && data.Name == r).ToList();
 
-                            var sq = dret.RRQueries[0].ChangeQueryType(QTYPES.NSEC3, r + "." + selected.Name);
-                            soas.AddRange(BuildResponse(sq, zds));
-                        }
-                    }
-                    else
+                    //        var sq = dret.RRQueries[0].ChangeQueryType(QTYPES.NSEC3, r + "." + selected.Name);
+                    //        soas.AddRange(BuildResponse(sq, zds));
+                    //    }
+                    //}
+                    //else
                     {
                         var nr = selected.Data.Where(data => data.Type == QTYPES.NSEC3).ToList();
 
