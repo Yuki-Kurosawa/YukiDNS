@@ -15,6 +15,11 @@ using YukiDNS.DNS_RFC;
 using System.IO;
 using System.Xml.Linq;
 using Org.BouncyCastle.Ocsp;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
+using Org.BouncyCastle.Tls.Crypto;
+using Org.BouncyCastle.Tls.Crypto.Impl.BC;
+using Org.BouncyCastle.Tls;
 
 namespace YukiDNS.DNS_CORE
 {
@@ -29,6 +34,9 @@ namespace YukiDNS.DNS_CORE
 
             Thread dnstcp = new Thread(DNS_THREAD_TCP);
             dnstcp.Start();
+
+            Thread dnstcptls = new Thread(DNS_THREAD_TCP_TLS);
+            dnstcptls.Start();
         }
 
         static List<ZoneArea> zones = new List<ZoneArea>();
@@ -61,6 +69,45 @@ namespace YukiDNS.DNS_CORE
                 var req = new byte[1000];
 
                 var str = ret.GetStream();
+                int size = str.Read(req, 0, 1000);
+
+                req = req.Take(size).ToArray();
+
+                req = req.Skip(2).ToArray();
+
+
+                var dns = ParseDNSRequest(req);
+
+                var dret = Resolve(dns);
+
+                byte[] buf = dret.To();
+
+
+                str.Write(new[] { (byte)(buf.Length / 256) }, 0, 1);
+                str.Write(new[] { (byte)(buf.Length % 256) }, 0, 1);
+                str.Write(buf, 0, buf.Length);
+                str.Flush();
+                str.Close();
+                ret.Close();
+            }
+        }
+
+        private static void DNS_THREAD_TCP_TLS()
+        {
+            TcpListener tcp = new TcpListener(new IPEndPoint(IPAddress.Any, 853));
+            tcp.Start();
+
+            while (true)
+            {
+                var ret = tcp.AcceptTcpClientAsync().Result;
+                var req = new byte[1000];
+
+                var str = new SslStream(ret.GetStream());
+
+                X509Certificate x509 = new X509Certificate("D:\\Github\\YukiDNS\\bin\\Debug\\net6.0\\certs\\ca.pfx", "123456");
+
+                str.AuthenticateAsServer(x509);
+
                 int size = str.Read(req, 0, 1000);
 
                 req = req.Take(size).ToArray();
