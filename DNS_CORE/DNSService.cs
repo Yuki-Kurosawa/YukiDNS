@@ -17,9 +17,6 @@ using System.Xml.Linq;
 using Org.BouncyCastle.Ocsp;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using Org.BouncyCastle.Tls.Crypto;
-using Org.BouncyCastle.Tls.Crypto.Impl.BC;
-using Org.BouncyCastle.Tls;
 
 namespace YukiDNS.DNS_CORE
 {
