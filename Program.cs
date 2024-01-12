@@ -23,6 +23,7 @@ using YukiDNS.CA_CORE;
 using YukiDNS.DNS_RFC;
 using Org.BouncyCastle.Utilities;
 using Org.BouncyCastle.Tls.Crypto.Impl.BC;
+using YukiDNS.HTTP_CORE.Kernel;
 
 namespace YukiDNS
 {
@@ -48,6 +49,21 @@ namespace YukiDNS
                     Console.WriteLine(JsonConvert.SerializeObject(data1));
                 }
 
+                Console.ReadLine();
+            }
+            else if (args[0] == "http")
+            {
+                HttpServer http = new HttpServer(new[] { "http://127.0.0.1:18888/" }, new Config()
+                {
+                    defaultPage = new[] { "index.html" },
+                    path = "A:\\",
+                    prefix = new Prefix[] {
+                        new Prefix(){ host="127.0.0.1", port=18888, scheme="http" }
+                    },
+                    siteId = 1,
+                    siteName = "AAA"
+                });
+                http.StartServer();
                 Console.ReadLine();
             }
             else
