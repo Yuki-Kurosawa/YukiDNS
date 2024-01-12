@@ -8,7 +8,6 @@ using System.IO;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace System.Web.Util
 {
@@ -16,7 +15,7 @@ namespace System.Web.Util
 
     public class HttpEncoder
     {
-        private static HttpEncoder _customEncoder;
+        //private static HttpEncoder _customEncoder;
         private static readonly HttpEncoder _defaultEncoder = new HttpEncoder();
         private static readonly string[] _headerEncodingTable = new string[] {
             "%00", "%01", "%02", "%03", "%04", "%05", "%06", "%07", "%08", "%09", "%0a", "%0b", "%0c", "%0d", "%0e", "%0f",

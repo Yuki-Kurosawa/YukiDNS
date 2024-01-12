@@ -18,7 +18,7 @@ namespace YukiDNS.HTTP_CORE.Kernel
             {
                 return JsonConvert.DeserializeObject<Config[]>(conf);
             }
-            catch (Exception ex)
+            catch
             {
                 throw new ConfigParseException("站点设置存储丢失或损坏", siteConf,-1);
             }
