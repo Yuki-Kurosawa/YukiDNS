@@ -53,10 +53,10 @@ namespace YukiDNS
             }
             else if (args[0] == "http")
             {
-                HttpServer http = new HttpServer(new[] { "http://*:18888/" }, new Config()
+                HttpServer http = new HttpServer(new[] { "http://127.0.0.1:18888/" }, new Config()
                 {
                     defaultPage = new[] { "index.html" },
-                    path = "/mnt/a",
+                    path = "A:\\",
                     prefix = new Prefix[] {
                         new Prefix(){ host="0.0.0.0", port=18888, scheme="http" }
                     },

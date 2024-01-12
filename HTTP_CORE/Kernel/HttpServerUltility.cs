@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -18,7 +19,10 @@ namespace YukiDNS.HTTP_CORE.Kernel
 
         public string MapPath(string path)
         {
-            return _basepath + path.Replace("//","/").Replace("~/", "/").Replace('/','\\');
+            string p= Path.Combine(_basepath , path.Replace("//", "/").Replace("~/", "/").TrimStart('/'));
+            Console.WriteLine(_basepath);
+            Console.WriteLine(p);
+            return p;
         }
     }
 }

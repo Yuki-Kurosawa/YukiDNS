@@ -1,11 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "MzpahYixS7x8NoyroEBXdZb9C0za2LxFZpk/EMLqOpG6xcuYs6Yk72f9pxw+1/zgoMr0fZxmN9zcMO5SlPwPRA==",
+  "dgSpecHash": "hY6lf+HXD7HWT6eGHNJvB5T3R0UIxvZGmlJ6KJWp/4hElH945nOIP7U9ujpexrZNERPT5n+eJ8EHR66nplgHWg==",
   "success": true,
-  "projectFilePath": "/mnt/d/Github/YukiDNS/YukiDNS.csproj",
+  "projectFilePath": "D:\\Github\\YukiDNS\\YukiDNS.csproj",
   "expectedPackageFiles": [
-    "/home/yuki/.nuget/packages/bouncycastle.cryptography/2.2.1/bouncycastle.cryptography.2.2.1.nupkg.sha512",
-    "/home/yuki/.nuget/packages/newtonsoft.json/13.0.3/newtonsoft.json.13.0.3.nupkg.sha512"
+    "C:\\Users\\Yuki\\.nuget\\packages\\bouncycastle.cryptography\\2.2.1\\bouncycastle.cryptography.2.2.1.nupkg.sha512",
+    "C:\\Users\\Yuki\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512"
   ],
   "logs": []
 }
