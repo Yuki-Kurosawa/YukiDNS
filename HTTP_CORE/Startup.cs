@@ -21,6 +21,7 @@ namespace YukiDNS.HTTP_CORE
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
+
             app.UseRouting();
             app.UseEndpoints(endpoints =>
             {
