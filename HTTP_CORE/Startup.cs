@@ -21,6 +21,7 @@ namespace YukiDNS.HTTP_CORE
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
+            app.UseMiddleware<YukiDNSMiddleware>();
 
             app.UseRouting();
             app.UseEndpoints(endpoints =>
@@ -30,6 +31,8 @@ namespace YukiDNS.HTTP_CORE
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });
+
+            
         }
 
         public void ConfigureServices(IServiceCollection services)
