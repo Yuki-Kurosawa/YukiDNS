@@ -95,18 +95,17 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Github\\YukiDNS\\YukiDNS.csproj",
+      "projectUniqueName": "E:\\Github\\YukiDNS\\YukiDNS.csproj",
       "projectName": "YukiDNS",
-      "projectPath": "D:\\Github\\YukiDNS\\YukiDNS.csproj",
+      "projectPath": "E:\\Github\\YukiDNS\\YukiDNS.csproj",
       "packagesPath": "C:\\Users\\Yuki\\.nuget\\packages\\",
-      "outputPath": "D:\\Github\\YukiDNS\\obj\\",
+      "outputPath": "E:\\Github\\YukiDNS\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
         "C:\\Users\\Yuki\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\DevExpress 18.1.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -114,7 +113,6 @@
         "net6.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\DevExpress 18.1\\Components\\System\\Components\\Packages": {},
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
@@ -161,6 +159,9 @@
         "assetTargetFallback": true,
         "warn": true,
         "frameworkReferences": {
+          "Microsoft.AspNetCore.App": {
+            "privateAssets": "none"
+          },
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
           }
