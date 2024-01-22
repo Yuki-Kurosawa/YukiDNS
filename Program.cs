@@ -53,8 +53,11 @@ namespace YukiDNS
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>()                
-                ;
+                    webBuilder.UseStartup<Startup>();
+                    webBuilder.UseKestrel(options =>
+                    {
+                        options.AllowSynchronousIO = true;
+                    });
                 });
     }
 }
