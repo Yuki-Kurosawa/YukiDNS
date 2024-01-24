@@ -21,6 +21,7 @@ namespace YukiDNS
         {
             if (args[0] == "dns")
             {
+                DNSService.LoadConfig();
                 DNSService.Start();
             }
             else if (args[0] == "zone")
@@ -40,6 +41,7 @@ namespace YukiDNS
             }
             else if (args[0] == "http")
             {
+                DNSService.LoadConfig();
                 DNSService.LoadZoneFiles();
                 CreateHostBuilder(args).Build().Run();
             }

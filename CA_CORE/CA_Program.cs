@@ -22,11 +22,12 @@ namespace YukiDNS.CA_CORE
 {
     public class CA_Program
     {
-        static CA_Config config;
+        public static CA_Config config;
+
         public static void Main(string[] args)
         {
-            string configStr = File.ReadAllText("conf/ca.json");
-            config = JsonConvert.DeserializeObject<CA_Config>(configStr);
+            LoadConfig();
+
             Console.WriteLine("Yuki Certificate Authority 0.1.4");
             Console.WriteLine("1. Generate Self Signed Root CA Certificate");
             Console.WriteLine("2. Generate Layer-2 CA Certificate");
@@ -41,6 +42,12 @@ namespace YukiDNS.CA_CORE
                 case "3": GenerateWebServer(); break;
                 case "0": return;
             }
+        }
+
+        public static void LoadConfig()
+        {
+            string configStr = File.ReadAllText("conf/ca.json");
+            config = JsonConvert.DeserializeObject<CA_Config>(configStr);
         }
 
         public static void GenerateSelfSign()

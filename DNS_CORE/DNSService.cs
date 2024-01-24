@@ -28,8 +28,6 @@ namespace YukiDNS.DNS_CORE
 
         public static void Start()
         {
-            string configStr = File.ReadAllText("conf/dns.json");
-            config = JsonConvert.DeserializeObject<DNSConfig>(configStr);
 
             LoadZoneFiles();
 
@@ -41,6 +39,12 @@ namespace YukiDNS.DNS_CORE
 
             Thread dnstcptls = new Thread(DNS_THREAD_TCP_TLS);
             dnstcptls.Start();
+        }
+
+        public static void LoadConfig()
+        {
+            string configStr = File.ReadAllText("conf/dns.json");
+            config = JsonConvert.DeserializeObject<DNSConfig>(configStr);
         }
 
         static List<ZoneArea> zones = new List<ZoneArea>();
