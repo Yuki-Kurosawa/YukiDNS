@@ -562,9 +562,9 @@ namespace YukiDNS.DNS_RFC
         {
             RROPTData opt = new RROPTData();
             opt.RCODE = (ushort)(TTL / 0x1000000u);
-            opt.VERSION = (ushort)(TTL % 0x1000000u / 0x10000u);
-            opt.DO = TTL / 0x10000u % 0x80u == 1;
-            opt.Z = (ushort)(TTL % 0x80u);
+            opt.VERSION = (ushort)(TTL % 0x1000000u / 0x10000u);            
+            opt.Z = (ushort)(TTL % 0x8000u);
+            opt.DO = TTL / 0x8000u == 1;
             return opt;
         }
 
