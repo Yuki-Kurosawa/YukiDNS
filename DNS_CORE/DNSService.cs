@@ -147,7 +147,7 @@ namespace YukiDNS.DNS_CORE
             }
         }
 
-        private static DNSRequest Resolve(DNSRequest dns)
+        public static DNSRequest Resolve(DNSRequest dns)
         {
             DNSRequest dret = dns.Copy();
             dret.IsResponse = true;
@@ -743,7 +743,7 @@ namespace YukiDNS.DNS_CORE
             return answers;
         }
 
-        private static DNSRequest ParseDNSRequest(byte[] req)
+        public static DNSRequest ParseDNSRequest(byte[] req)
         {
             DNSRequest dns = DNSRequest.From(req);
 

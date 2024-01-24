@@ -40,6 +40,7 @@ namespace YukiDNS
             }
             else if (args[0] == "http")
             {
+                DNSService.LoadZoneFiles();
                 CreateHostBuilder(args).Build().Run();
             }
             else
