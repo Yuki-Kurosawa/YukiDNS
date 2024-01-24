@@ -23,15 +23,22 @@ namespace YukiDNS.HTTP_CORE
         {
             app.UseMiddleware<YukiDNSMiddleware>();
 
-            app.UseRouting();
-            app.UseEndpoints(endpoints =>
+            var def = new DefaultFilesOptions()
             {
-                endpoints.MapControllers();
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
-            });
+                DefaultFileNames = new[]
+                {
+                    "index.html",
+                    "index.htm",
+                    "default.html",
+                    "default.htm"
+                }
+            };
 
+            app.UseDefaultFiles(def);
+
+            app.UseStaticFiles();
+
+            app.UseRouting();
             
         }
 
