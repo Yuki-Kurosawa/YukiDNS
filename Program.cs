@@ -11,49 +11,56 @@ using YukiDNS.CA_CORE;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using YukiDNS.HTTP_CORE;
+using System.Threading;
 
 namespace YukiDNS
 {
     class Program
     {
+        static Thread WebService = null;
 
         static void Main(string[] args)
         {
-            if (args[0] == "dns")
+            //Load Configs
+            DNSService.LoadConfig();
+            DNSService.LoadZoneFiles();
+            CA_Program.LoadConfig();
+
+            //Start Services
+            //DNSService.Start();
+            StartWebServer(args);
+
+
+            Console.WriteLine("All Service Started");
+
+
+            Console.ReadLine();
+        }
+
+        public static void StartWebServer(string[] args)
+        {
+            if (WebService == null)
             {
-                DNSService.LoadConfig();
-                DNSService.Start();
-            }
-            else if (args[0] == "zone")
-            {
-                string[] data = File.ReadAllLines(@"zones\e1.ksyuki.com.flat.zone");
-
-                ZoneArea zone = ZoneParser.ParseArea("e1.ksyuki.com", data);
-
-                List<ZoneData> list = zone.Data;
-
-                foreach (var data1 in list)
+                WebService = new Thread(() =>
                 {
-                    Console.WriteLine(JsonConvert.SerializeObject(data1));
-                }
+                    try
+                    { 
+                        CreateHostBuilder(args).Build().Run();
+                    }
+                    catch
+                    {
+                        WebService = null;
+                    }
+                });
 
-                Console.ReadLine();
-            }
-            else if (args[0] == "http")
-            {
-                DNSService.LoadConfig();
-                DNSService.LoadZoneFiles();
-                CreateHostBuilder(args).Build().Run();
-            }
-            else
-            {
-                CA_Program.Main(args.Skip(1).ToArray());
+                WebService.Start();
             }
         }
 
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
+        public static IHostBuilder CreateHostBuilder(string[] args)
+        {
+            return Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
@@ -62,6 +69,7 @@ namespace YukiDNS
                         options.AllowSynchronousIO = true;
                     });
                 });
+        }
     }
 }
 

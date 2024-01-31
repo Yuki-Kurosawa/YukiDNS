@@ -28,9 +28,6 @@ namespace YukiDNS.DNS_CORE
 
         public static void Start()
         {
-
-            LoadZoneFiles();
-
             Thread dns = new Thread(DNS_THREAD_UDP);
             dns.Start();
 
