@@ -20,7 +20,7 @@ using Newtonsoft.Json;
 
 namespace YukiDNS.CA_CORE
 {
-    public class CA_Program
+    public class CA_Service
     {
         public static CA_Config config;
 

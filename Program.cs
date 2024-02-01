@@ -24,10 +24,10 @@ namespace YukiDNS
             //Load Configs
             DNSService.LoadConfig();
             DNSService.LoadZoneFiles();
-            CA_Program.LoadConfig();
+            CA_Service.LoadConfig();
 
             //Start Services
-            //DNSService.Start();
+            DNSService.Start();
             StartWebServer(args);
 
 
