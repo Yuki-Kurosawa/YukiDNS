@@ -18,6 +18,15 @@ namespace YukiDNS.CA_CORE
         public const string PublicKeyHeader = "-----BEGIN PUBLIC KEY-----";
         public const string PublicKeyFooter = "-----BEGIN PUBLIC KEY-----";
 
+        public static RSAParameters CreateNewKey(int length=2048)
+        {
+            RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(length);
+
+            return rsa.ExportParameters(true);
+        }
+
+        
+
         public static string RSAKeyToPem(RSAParameters rsaPara, bool isPrivateKey)
         {
             string empty = string.Empty;
@@ -126,5 +135,6 @@ namespace YukiDNS.CA_CORE
             }
             return byteList.ToArray();
         }
+    
     }
 }

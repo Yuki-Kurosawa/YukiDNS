@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using YukiDNS.HTTP_CORE;
 using System.Threading;
+using YukiDNS.ACME_CORE;
 
 namespace YukiDNS
 {
@@ -32,6 +33,7 @@ namespace YukiDNS
 
 
             Console.WriteLine("All Service Started");
+            ACMEService.Start();
 
 
             Console.ReadLine();
