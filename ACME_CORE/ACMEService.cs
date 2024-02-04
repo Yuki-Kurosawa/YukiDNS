@@ -12,6 +12,17 @@ using System.Security.Cryptography;
 using YukiDNS.CA_CORE;
 using System.Text;
 using System.Threading;
+using Org.BouncyCastle.Asn1.Cmp;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Net;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Pkcs;
+using System.Xml.Linq;
+using Org.BouncyCastle.OpenSsl;
+using Org.BouncyCastle.Asn1.Pkcs;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Security;
 
 namespace YukiDNS.ACME_CORE
 {
@@ -41,12 +52,14 @@ namespace YukiDNS.ACME_CORE
 
             nonce = GetNewNonce(httpClient, objDic);
 
-            Console.WriteLine("Creating New Order ......");
-            //New Order
-            var orderObj=NewOrder(httpClient, objDic, nonce, kid, new[] {
+            string[] names = new[] {
                 "test.ksyuki.com",
                 "test2.ksyuki.com"
-            },acmeKey);
+            };
+
+            Console.WriteLine("Creating New Order ......");
+            //New Order
+            var orderObj=NewOrder(httpClient, objDic, nonce, kid, names,acmeKey);
             
             //Get Authorization Info
             foreach(var i in orderObj.Authorizations)
@@ -65,8 +78,123 @@ namespace YukiDNS.ACME_CORE
                     return;
                 }
 
-                break;
             }
+
+            //finalize order
+            Console.WriteLine("Finalizing Order with CSR ...");
+            RSAParameters certKey=RSACryptoHelper.CreateNewKey(4096);
+            var csr = GenerateACMECSR(names, certKey);
+
+            nonce = GetNewNonce(httpClient, objDic);
+            var finalRet=FinalizeOrderWithCSR(httpClient, orderObj, nonce, kid, csr, acmeKey);
+
+            if(finalRet != null)
+            {
+                Console.WriteLine("Getting Certificate ...");
+                orderObj =GetOrderInfo(httpClient, orderObj.OrderID);
+
+                if(orderObj.Certificate!=null)
+                {
+                    var cert=GetCertificate(httpClient, orderObj.Certificate);
+                    File.WriteAllText("crt.crt", cert);
+                    var pem = RSACryptoHelper.RSAKeyToPem(certKey, true);
+                    File.WriteAllText("crt.pem", pem);
+                }
+
+                Console.WriteLine("Certificate Updated");
+            }
+        }
+
+        private static string GetCertificate(HttpClient httpClient, string certificate)
+        {
+            var ret = httpClient.GetStringAsync(certificate).Result;
+            return ret;
+        }
+
+        private static ACMEOrderObject GetOrderInfo(HttpClient httpClient, string orderID)
+        {
+            var ret = httpClient.GetStringAsync(orderID).Result;
+            JObject jOrder = JsonConvert.DeserializeObject<JObject>(ret);
+            string[] authorizations = JsonConvert.DeserializeObject<string[]>(JsonConvert.SerializeObject(jOrder.GetValue("authorizations")));
+            return new ACMEOrderObject()
+            {
+                OrderID = orderID,
+                FinalizeAction = jOrder.GetValue("finalize").ToString(),
+                Authorizations = authorizations,
+                Certificate = jOrder.GetValue("certificate").ToString()
+            };
+        }
+
+        private static ACMECSRObject GenerateACMECSR(string[] names,RSAParameters acmeKey)
+        {
+            var key = DotNetUtilities.GetRsaKeyPair(acmeKey);
+
+            GeneralNames gns1 = null;
+            List<GeneralName> gnsl = new List<GeneralName>();
+
+            foreach (string dnsname in names)
+            {
+                if (!string.IsNullOrEmpty(dnsname.Trim()))
+                {
+                    gnsl.Add(new GeneralName(GeneralName.DnsName, dnsname.Trim()));
+                }
+            }
+
+            gns1 = new GeneralNames(gnsl.ToArray());
+
+            X509ExtensionsGenerator sg = new X509ExtensionsGenerator();
+            sg.AddExtension(X509Extensions.SubjectAlternativeName, false, gns1.ToAsn1Object());
+            X509Extensions sans = sg.Generate();
+            Asn1Set asn1 = new DerSet(new AttributeX509(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(sans)));
+
+            Pkcs10CertificationRequest request = new Pkcs10CertificationRequest("sha256withRSA", new X509Name("CN=" + names[0]), key.Public, asn1, key.Private);
+            StringBuilder pb3 = new StringBuilder();
+            PemWriter pw3 = new PemWriter(new StringWriter(pb3));
+            pw3.WriteObject(request);
+            string ca3 = pb3.ToString();
+
+            byte[] der=request.GetDerEncoded();
+
+            return new ACMECSRObject() { PEM = ca3, DER = der };
+        }
+
+        private static string FinalizeOrderWithCSR(HttpClient httpClient, ACMEOrderObject order, string nonce,string kid, ACMECSRObject csr,RSAParameters acmeKey)
+        {
+            Dictionary<string, string> dicFinal = new Dictionary<string, string>();
+            dicFinal["protected"] = Base64Tool.UrlEncodeFromString(JsonConvert.SerializeObject(new
+            {
+                alg = "RS256",
+                nonce = nonce,
+                url = order.FinalizeAction,
+                kid = kid
+            }));
+            dicFinal["payload"] = Base64Tool.UrlEncodeFromString(JsonConvert.SerializeObject(new
+            {
+                csr = Base64Tool.UrlEncode(csr.DER)
+            }));
+
+            var signFinal = RSACryptoHelper.Sign(acmeKey, Encoding.UTF8.GetBytes($@"{dicFinal["protected"]}.{dicFinal["payload"]}"), "SHA256");
+
+            dicFinal["signature"] = Base64Tool.UrlEncode(signFinal);
+
+            HttpContent finalReq = new StringContent(JsonConvert.SerializeObject(dicFinal));
+
+            finalReq.Headers.ContentType = new MediaTypeHeaderValue("application/jose+json");
+
+            var finalResp = httpClient.PostAsync(order.FinalizeAction, finalReq).Result;
+
+            string finalStr = finalResp.Content.ReadAsStringAsync().Result;
+
+            Console.WriteLine(finalStr);
+
+            JObject jOrder = JsonConvert.DeserializeObject<JObject>(finalStr);
+
+            if (jOrder.GetValue("status").ToString() == "400")
+            {
+                return null;
+            }
+
+            return "Finalized";
 
         }
 
@@ -114,7 +242,6 @@ namespace YukiDNS.ACME_CORE
             return authObj.status == "valid";
         }
 
-
         private static string GetHTTP01AuthToken(string dnsAuthToken, RSAParameters acmeKey)
         {
             var jwk = new
@@ -130,8 +257,6 @@ namespace YukiDNS.ACME_CORE
 
             return jwkHash;
         }
-
-
 
         private static bool ProceedDNS01Challenge(HttpClient httpClient, string nonce, RSAParameters acmeKey, string kid, string authUrl, ACMEAuthObject authObj)
         {
@@ -322,6 +447,8 @@ namespace YukiDNS.ACME_CORE
 
             string[] authorizations = JsonConvert.DeserializeObject<string[]>(JsonConvert.SerializeObject(jOrder.GetValue("authorizations")));
             string oid = newOrderResp.Headers.GetValues("Location").ToList()[0];
+
+            Console.WriteLine(oid);
 
             Console.WriteLine(jOrder.GetValue("finalize").ToString());
             Console.WriteLine(JsonConvert.SerializeObject(authorizations));

@@ -5,5 +5,6 @@
         public string OrderID { get; set; }
         public string[] Authorizations { get; set; }
         public string FinalizeAction { get; set; }
+        public string Certificate { get; set; } = "";
     }
 }
