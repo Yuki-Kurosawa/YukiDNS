@@ -53,41 +53,119 @@ namespace YukiDNS.ACME_CORE
             {
                 var authObj = GetAuthorization(httpClient, i);
 
-                var dnsAuthToken = authObj.challenges.Where(k => k.type == "dns-01").ToList()[0].token;
-
-                string dnsAuthDigest = Base64Tool.UrlEncode(SHA256.HashData(Encoding.UTF8.GetBytes(GetDNS01AuthToken(dnsAuthToken, acmeKey))));
-
-                Console.WriteLine($"Please set a DNS TXT record named \"{authObj.identifier.value}\" with value: " + dnsAuthDigest);
-                Console.WriteLine("Please press enter key if record is ready");
-                Console.ReadLine();
-                
-
                 nonce = GetNewNonce(httpClient, objDic);
-                TriggerAuthorization(httpClient, nonce, kid, acmeKey, authObj.challenges.Where(k => k.type == "dns-01").ToList()[0]);
+                bool authResult = false?
+                    ProceedDNS01Challenge(httpClient, nonce, acmeKey, kid, i, authObj)
+                    :
+                    ProceedHTTP01Challenge(httpClient, nonce, acmeKey, kid, i, authObj);
 
-                int sec = 0;
-                while (authObj.status == "pending")
+                if (!authResult)
                 {
-                    Console.WriteLine(authObj.identifier.value + " token: " + authObj.challenges[0].token + " status: " + authObj.status);
-                    authObj = GetAuthorization(httpClient, i);
-                    Thread.Sleep(10000);
-                    sec += 10;
-                    Console.WriteLine("Authorizing ... " + sec.ToString());
-                }
-
-                if (authObj.status == "valid")
-                {
-                    Console.WriteLine($"ACME Authorized for \"{authObj.identifier.value}\"");
-
-                }
-                else
-                {
-                    Console.WriteLine($"ACME Authorized for \"{authObj.identifier.value}\" failed" + ", message: " + authObj.challenges[0].error.detail);
+                    Console.WriteLine($"ACME challenge failed for \"{authObj.identifier.value}\", order cancelled.");
+                    return;
                 }
 
                 break;
             }
 
+        }
+
+        private static bool ProceedHTTP01Challenge(HttpClient httpClient, string nonce, RSAParameters acmeKey, string kid, string authUrl, ACMEAuthObject authObj)
+        {
+            if (!Directory.Exists(".well-known/acme-challenge"))
+            {
+                Directory.CreateDirectory(".well-known/acme-challenge");
+            }
+
+            var httpAuthToken = authObj.challenges.Where(k => k.type == "http-01").ToList()[0].token;
+
+            string httpAuthDigest = GetHTTP01AuthToken(httpAuthToken, acmeKey);
+
+            Console.WriteLine($"Please place a file named \".well_known/acme-challenge/{httpAuthToken}\" with content:");
+            Console.WriteLine(httpAuthDigest);
+
+            File.WriteAllText($".well-known/acme-challenge/{httpAuthToken}", httpAuthDigest);
+
+            Console.WriteLine("Please press enter key if record is ready");
+            Console.ReadLine();
+
+            TriggerAuthorization(httpClient, nonce, kid, acmeKey, authObj.challenges.Where(k => k.type == "http-01").ToList()[0]);
+
+            int sec = 0;
+            while (authObj.status == "pending")
+            {
+                Console.WriteLine(authObj.identifier.value + " token: " + authObj.challenges[0].token + " status: " + authObj.status);
+                authObj = GetAuthorization(httpClient, authUrl);
+                Thread.Sleep(10000);
+                sec += 10;
+                Console.WriteLine("Authorizing ... " + sec.ToString());
+            }
+
+            if (authObj.status == "valid")
+            {
+                Console.WriteLine($"ACME Authorized for \"{authObj.identifier.value}\"");
+
+            }
+            else
+            {
+                Console.WriteLine($"ACME Authorized for \"{authObj.identifier.value}\" failed" + ", message: " + authObj.challenges[0].error.detail);
+            }
+
+            return authObj.status == "valid";
+        }
+
+
+        private static string GetHTTP01AuthToken(string dnsAuthToken, RSAParameters acmeKey)
+        {
+            var jwk = new
+            {
+                e = Base64Tool.UrlEncode(acmeKey.Exponent),
+                kty = "RSA",
+                n = Base64Tool.UrlEncode(acmeKey.Modulus)
+            };
+
+            var jwkSHA2 = SHA256.HashData(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(jwk)));
+
+            string jwkHash = dnsAuthToken + "." + Base64Tool.UrlEncode(jwkSHA2);
+
+            return jwkHash;
+        }
+
+
+
+        private static bool ProceedDNS01Challenge(HttpClient httpClient, string nonce, RSAParameters acmeKey, string kid, string authUrl, ACMEAuthObject authObj)
+        {
+            var dnsAuthToken = authObj.challenges.Where(k => k.type == "dns-01").ToList()[0].token;
+
+            string dnsAuthDigest = Base64Tool.UrlEncode(SHA256.HashData(Encoding.UTF8.GetBytes(GetDNS01AuthToken(dnsAuthToken, acmeKey))));
+
+            Console.WriteLine($"Please set a DNS TXT record named \"{authObj.identifier.value}\" with value: " + dnsAuthDigest);
+            Console.WriteLine("Please press enter key if record is ready");
+            Console.ReadLine();
+
+            TriggerAuthorization(httpClient, nonce, kid, acmeKey, authObj.challenges.Where(k => k.type == "dns-01").ToList()[0]);
+
+            int sec = 0;
+            while (authObj.status == "pending")
+            {
+                Console.WriteLine(authObj.identifier.value + " token: " + authObj.challenges[0].token + " status: " + authObj.status);
+                authObj = GetAuthorization(httpClient, authUrl);
+                Thread.Sleep(10000);
+                sec += 10;
+                Console.WriteLine("Authorizing ... " + sec.ToString());
+            }
+
+            if (authObj.status == "valid")
+            {
+                Console.WriteLine($"ACME Authorized for \"{authObj.identifier.value}\"");
+
+            }
+            else
+            {
+                Console.WriteLine($"ACME Authorized for \"{authObj.identifier.value}\" failed" + ", message: " + authObj.challenges[0].error.detail);
+            }
+
+            return authObj.status == "valid";
         }
 
         private static string GetDNS01AuthToken(string dnsAuthToken, RSAParameters acmeKey)

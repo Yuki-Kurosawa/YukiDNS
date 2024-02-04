@@ -36,9 +36,18 @@ namespace YukiDNS.HTTP_CORE
 
             app.UseDefaultFiles(def);
 
-            app.UseStaticFiles();
+            app.UseStaticFiles(new StaticFileOptions()
+            {
+                 ServeUnknownFileTypes= true,
+                 DefaultContentType="application/octet-stream"
+            });
 
             app.UseRouting();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
             
         }
 
