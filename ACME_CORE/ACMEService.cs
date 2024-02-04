@@ -11,6 +11,7 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using YukiDNS.CA_CORE;
 using System.Text;
+using System.Threading;
 
 namespace YukiDNS.ACME_CORE
 {
@@ -42,11 +43,104 @@ namespace YukiDNS.ACME_CORE
 
             Console.WriteLine("Creating New Order ......");
             //New Order
-            NewOrder(httpClient, objDic, nonce, kid, new[] {
+            var orderObj=NewOrder(httpClient, objDic, nonce, kid, new[] {
                 "test.ksyuki.com",
                 "test2.ksyuki.com"
             },acmeKey);
+            
+            //Get Authorization Info
+            foreach(var i in orderObj.Authorizations)
+            {
+                var authObj = GetAuthorization(httpClient, i);
 
+                var dnsAuthToken = authObj.challenges.Where(k => k.type == "dns-01").ToList()[0].token;
+
+                string dnsAuthDigest = Base64Tool.UrlEncode(SHA256.HashData(Encoding.UTF8.GetBytes(GetDNS01AuthToken(dnsAuthToken, acmeKey))));
+
+                Console.WriteLine($"Please set a DNS TXT record named \"{authObj.identifier.value}\" with value: " + dnsAuthDigest);
+                Console.WriteLine("Please press enter key if record is ready");
+                Console.ReadLine();
+                
+
+                nonce = GetNewNonce(httpClient, objDic);
+                TriggerAuthorization(httpClient, nonce, kid, acmeKey, authObj.challenges.Where(k => k.type == "dns-01").ToList()[0]);
+
+                int sec = 0;
+                while (authObj.status == "pending")
+                {
+                    Console.WriteLine(authObj.identifier.value + " token: " + authObj.challenges[0].token + " status: " + authObj.status);
+                    authObj = GetAuthorization(httpClient, i);
+                    Thread.Sleep(10000);
+                    sec += 10;
+                    Console.WriteLine("Authorizing ... " + sec.ToString());
+                }
+
+                if (authObj.status == "valid")
+                {
+                    Console.WriteLine($"ACME Authorized for \"{authObj.identifier.value}\"");
+
+                }
+                else
+                {
+                    Console.WriteLine($"ACME Authorized for \"{authObj.identifier.value}\" failed" + ", message: " + authObj.challenges[0].error.detail);
+                }
+
+                break;
+            }
+
+        }
+
+        private static string GetDNS01AuthToken(string dnsAuthToken, RSAParameters acmeKey)
+        {
+            var jwk = new
+            {
+                e = Base64Tool.UrlEncode(acmeKey.Exponent),
+                kty = "RSA",
+                n = Base64Tool.UrlEncode(acmeKey.Modulus)
+            };
+
+            var jwkSHA2 = SHA256.HashData(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(jwk)));
+
+            string jwkHash = dnsAuthToken + "." + Base64Tool.UrlEncode(jwkSHA2);
+
+            return jwkHash;
+        }
+
+        private static void TriggerAuthorization(HttpClient httpClient,string nonce, string kid, RSAParameters acmeKey, ACMEAuthChallenges challenge)
+        {
+            Dictionary<string, string> dicAuth = new Dictionary<string, string>();
+            dicAuth["protected"] = Base64Tool.UrlEncodeFromString(JsonConvert.SerializeObject(new
+            {
+                alg = "RS256",
+                nonce = nonce,
+                url = challenge.url,
+                kid = kid
+            }));
+            dicAuth["payload"] = Base64Tool.UrlEncodeFromString(JsonConvert.SerializeObject(new
+            {
+               
+            }));
+
+            var signAuth = RSACryptoHelper.Sign(acmeKey, Encoding.UTF8.GetBytes($@"{dicAuth["protected"]}.{dicAuth["payload"]}"), "SHA256");
+
+            dicAuth["signature"] = Base64Tool.UrlEncode(signAuth);
+
+            HttpContent authReq = new StringContent(JsonConvert.SerializeObject(dicAuth));
+
+            authReq.Headers.ContentType = new MediaTypeHeaderValue("application/jose+json");
+
+            var authResp = httpClient.PostAsync(challenge.url, authReq).Result;
+
+            Console.WriteLine(authResp.Content.ReadAsStringAsync().Result);
+        }
+
+        public static ACMEAuthObject GetAuthorization(HttpClient httpClient, string authUrl)
+        {
+            var ret = httpClient.GetStringAsync(authUrl).Result;
+
+            Console.WriteLine(ret);
+
+            return JsonConvert.DeserializeObject<ACMEAuthObject>(ret);
         }
 
         public static string GetNewNonce(HttpClient httpClient, JObject objDic)
@@ -107,7 +201,7 @@ namespace YukiDNS.ACME_CORE
             return kid;
         }
     
-        public static string NewOrder(HttpClient httpClient, JObject objDic,string nonce,string kid, string[] dnsNames, RSAParameters acmeKey)
+        public static ACMEOrderObject NewOrder(HttpClient httpClient, JObject objDic,string nonce,string kid, string[] dnsNames, RSAParameters acmeKey)
         {
             Dictionary<string, string> dicNewOrder = new Dictionary<string, string>();
             dicNewOrder["protected"] = Base64Tool.UrlEncodeFromString(JsonConvert.SerializeObject(new
@@ -154,8 +248,16 @@ namespace YukiDNS.ACME_CORE
             Console.WriteLine(jOrder.GetValue("finalize").ToString());
             Console.WriteLine(JsonConvert.SerializeObject(authorizations));
 
-            return oid;
+            return new ACMEOrderObject()
+            {
+                OrderID = oid,
+                FinalizeAction = jOrder.GetValue("finalize").ToString(),
+                Authorizations = authorizations
+            };
         }
+
+
+
 
     }
 }
