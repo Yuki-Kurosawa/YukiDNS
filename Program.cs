@@ -19,6 +19,7 @@ namespace YukiDNS
     class Program
     {
         static Thread WebService = null;
+        static IHost WebHost = null;
 
         static void Main(string[] args)
         {
@@ -46,16 +47,28 @@ namespace YukiDNS
                 WebService = new Thread(() =>
                 {
                     try
-                    { 
-                        CreateHostBuilder(args).Build().Run();
+                    {
+                        WebHost = CreateHostBuilder(args).Build();
+                        WebHost.Run();
                     }
                     catch
                     {
                         WebService = null;
+                        WebHost = null;
                     }
                 });
 
                 WebService.Start();
+            }
+        }
+
+        public static void StopWebServer(string[] args)
+        {
+            if (WebService != null)
+            {
+                WebHost.StopAsync().Wait();
+                WebHost = null;
+                WebService = null;
             }
         }
 
