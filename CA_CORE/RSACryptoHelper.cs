@@ -23,9 +23,7 @@ namespace YukiDNS.CA_CORE
             RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(length);
 
             return rsa.ExportParameters(true);
-        }
-
-        
+        }        
 
         public static string RSAKeyToPem(RSAParameters rsaPara, bool isPrivateKey)
         {
