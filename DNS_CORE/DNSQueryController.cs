@@ -2,9 +2,8 @@
 using Org.BouncyCastle.Ocsp;
 using System;
 using System.IO;
-using YukiDNS.DNS_CORE;
 
-namespace YukiDNS.HTTP_CORE
+namespace YukiDNS.DNS_CORE
 {
     public class DNSQueryController:Controller
     {
