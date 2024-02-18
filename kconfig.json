@@ -1,0 +1,8 @@
+{
+  "Kestrel": {
+    "Endpoints": {
+      "https": { "Url": "https://*:443/" },
+      "http": { "Url": "http://*:80/" }
+    }
+  }
+  }

@@ -13,6 +13,9 @@ using Microsoft.Extensions.Hosting;
 using YukiDNS.HTTP_CORE;
 using System.Threading;
 using YukiDNS.ACME_CORE;
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.AspNetCore.Server.Kestrel;
 
 namespace YukiDNS
 {
@@ -34,7 +37,7 @@ namespace YukiDNS
 
 
             Console.WriteLine("All Service Started");
-            ACMEService.Start();
+            //ACMEService.Start();
 
 
             Console.ReadLine();
@@ -79,10 +82,18 @@ namespace YukiDNS
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                    webBuilder.UseKestrel(options =>
-                    {
+                    webBuilder.UseKestrel((builder,options) =>
+                    { 
                         options.AllowSynchronousIO = true;
+                        options.Configure(builder.Configuration.GetSection("Kestrel"),reloadOnChange: true);
                     });
+
+                    IConfiguration kconfig = new ConfigurationBuilder()
+                    .AddJsonFile("kconfig.json")
+                    .AddEnvironmentVariables()
+                    .Build();
+
+                    webBuilder.UseConfiguration(kconfig);
                 });
         }
     }

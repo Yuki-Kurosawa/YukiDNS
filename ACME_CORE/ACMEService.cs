@@ -48,7 +48,7 @@ namespace YukiDNS.ACME_CORE
             //New Account            
             string kid = NewAccount(httpClient, objDic, nonce, new[] {
                 "mailto:admin@test.com"
-            },acmeKey  );
+            }, acmeKey);
 
             nonce = GetNewNonce(httpClient, objDic);
 
@@ -59,15 +59,15 @@ namespace YukiDNS.ACME_CORE
 
             Console.WriteLine("Creating New Order ......");
             //New Order
-            var orderObj=NewOrder(httpClient, objDic, nonce, kid, names,acmeKey);
-            
+            var orderObj = NewOrder(httpClient, objDic, nonce, kid, names, acmeKey);
+
             //Get Authorization Info
-            foreach(var i in orderObj.Authorizations)
+            foreach (var i in orderObj.Authorizations)
             {
                 var authObj = GetAuthorization(httpClient, i);
 
                 nonce = GetNewNonce(httpClient, objDic);
-                bool authResult = false?
+                bool authResult = false ?
                     ProceedDNS01Challenge(httpClient, nonce, acmeKey, kid, i, authObj)
                     :
                     ProceedHTTP01Challenge(httpClient, nonce, acmeKey, kid, i, authObj);
@@ -82,27 +82,30 @@ namespace YukiDNS.ACME_CORE
 
             //finalize order
             Console.WriteLine("Finalizing Order with CSR ...");
-            RSAParameters certKey=RSACryptoHelper.CreateNewKey(4096);
+            RSAParameters certKey = RSACryptoHelper.CreateNewKey(4096);
             var csr = GenerateACMECSR(names, certKey);
 
             nonce = GetNewNonce(httpClient, objDic);
-            var finalRet=FinalizeOrderWithCSR(httpClient, orderObj, nonce, kid, csr, acmeKey);
+            var finalRet = FinalizeOrderWithCSR(httpClient, orderObj, nonce, kid, csr, acmeKey);
 
-            if(finalRet != null)
+            if (finalRet == null)
             {
-                Console.WriteLine("Getting Certificate ...");
-                orderObj =GetOrderInfo(httpClient, orderObj.OrderID);
-
-                if(orderObj.Certificate!=null)
-                {
-                    var cert=GetCertificate(httpClient, orderObj.Certificate);
-                    File.WriteAllText("crt.crt", cert);
-                    var pem = RSACryptoHelper.RSAKeyToPem(certKey, true);
-                    File.WriteAllText("crt.pem", pem);
-                }
-
-                Console.WriteLine("Certificate Updated");
+                Console.WriteLine("ACME Order isn't finalized successfully.");
+                return;
             }
+
+            Console.WriteLine("Getting Certificate ...");
+            orderObj = GetOrderInfo(httpClient, orderObj.OrderID);
+
+            if (orderObj.Certificate != null)
+            {
+                var cert = GetCertificate(httpClient, orderObj.Certificate);
+                File.WriteAllText("crt.crt", cert);
+                var pem = RSACryptoHelper.RSAKeyToPem(certKey, true);
+                File.WriteAllText("crt.pem", pem);
+            }
+
+            Console.WriteLine("Certificate Updated");
         }
 
         private static string GetCertificate(HttpClient httpClient, string certificate)
