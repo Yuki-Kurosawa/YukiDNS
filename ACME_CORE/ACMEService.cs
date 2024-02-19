@@ -28,11 +28,19 @@ namespace YukiDNS.ACME_CORE
 {
     public class ACMEService
     {
+        public static ACMEConfig config;
+
+        public static void LoadConfig()
+        {
+            string configStr = File.ReadAllText("conf/acme.json");
+            config = JsonConvert.DeserializeObject<ACMEConfig>(configStr);
+        }
+
         public static void Start()
         {
             HttpClient httpClient = new HttpClient();
 
-            var retDic = httpClient.GetStringAsync("https://acme-staging-v02.api.letsencrypt.org/directory").Result;
+            var retDic = httpClient.GetStringAsync(config.Directory).Result;
 
             Console.WriteLine(retDic);
 
@@ -47,15 +55,12 @@ namespace YukiDNS.ACME_CORE
 
             //New Account            
             string kid = NewAccount(httpClient, objDic, nonce, new[] {
-                "mailto:admin@test.com"
+                $@"mailto:{config.Account}"
             }, acmeKey);
 
             nonce = GetNewNonce(httpClient, objDic);
 
-            string[] names = new[] {
-                "test.ksyuki.com",
-                "test2.ksyuki.com"
-            };
+            string[] names = config.Names;
 
             Console.WriteLine("Creating New Order ......");
             //New Order
@@ -67,7 +72,7 @@ namespace YukiDNS.ACME_CORE
                 var authObj = GetAuthorization(httpClient, i);
 
                 nonce = GetNewNonce(httpClient, objDic);
-                bool authResult = false ?
+                bool authResult = config.ChallengeMethod.ToUpper() == "DNS-01" ?
                     ProceedDNS01Challenge(httpClient, nonce, acmeKey, kid, i, authObj)
                     :
                     ProceedHTTP01Challenge(httpClient, nonce, acmeKey, kid, i, authObj);
@@ -82,7 +87,7 @@ namespace YukiDNS.ACME_CORE
 
             //finalize order
             Console.WriteLine("Finalizing Order with CSR ...");
-            RSAParameters certKey = RSACryptoHelper.CreateNewKey(4096);
+            RSAParameters certKey = RSACryptoHelper.CreateNewKey(config.CertKeyLength);
             var csr = GenerateACMECSR(names, certKey);
 
             nonce = GetNewNonce(httpClient, objDic);

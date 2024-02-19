@@ -30,6 +30,7 @@ namespace YukiDNS
             DNSService.LoadConfig();
             DNSService.LoadZoneFiles();
             CA_Service.LoadConfig();
+            ACMEService.LoadConfig();
 
             //Start Services
             DNSService.Start();
@@ -37,7 +38,7 @@ namespace YukiDNS
 
 
             Console.WriteLine("All Service Started");
-            //ACMEService.Start();
+            ACMEService.Start();
 
 
             Console.ReadLine();

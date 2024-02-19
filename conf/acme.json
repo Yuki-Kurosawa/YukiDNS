@@ -1,0 +1,11 @@
+{
+  "Directory": "https://acme-staging-v02.api.letsencrypt.org/directory",
+  "Account": "test@test.com",
+  "ACMEKeyLength": 2048,
+  "Names": [
+    "test.ksyuki.com",
+    "test2.ksyuki.com"
+  ],
+  "ChallengeMethod": "HTTP-01",
+  "CertKeyLength": 2048
+}
