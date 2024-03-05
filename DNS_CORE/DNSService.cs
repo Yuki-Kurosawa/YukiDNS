@@ -92,6 +92,7 @@ namespace YukiDNS.DNS_CORE
                     {
                         Console.WriteLine("FAILED");
                         Console.WriteLine(ExtToolRunner.Error);
+                        zoneConfig.DNSSEC = false;
                     }
                     else
                     {
@@ -106,6 +107,7 @@ namespace YukiDNS.DNS_CORE
                         {
                             Console.WriteLine("FAILED");
                             Console.WriteLine(ExtToolRunner.Output);
+                            zoneConfig.DNSSEC = false;
                         }
                         else
                         {
