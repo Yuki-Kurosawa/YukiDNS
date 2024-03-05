@@ -19,6 +19,7 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using static Org.BouncyCastle.Math.EC.ECCurve;
 using YukiDNS.CA_CORE;
+using YukiDNS.COMMON_CORE;
 
 namespace YukiDNS.DNS_CORE
 {
@@ -45,22 +46,94 @@ namespace YukiDNS.DNS_CORE
         }
 
         static List<ZoneArea> zones = new List<ZoneArea>();
+        static List<ZoneConfig> zoneConfigs;
+
+        public static void LoadZoneData()
+        {
+            string configStr = File.ReadAllText("conf/zones.json");
+            zoneConfigs = JsonConvert.DeserializeObject<List<ZoneConfig>>(configStr);
+        }
 
         public static void LoadZoneFiles()
         {
             string basePath = "zones";
-            string[] fs = Directory.GetFiles(basePath,"*.flat.zone");
 
-            foreach (string file in fs)
+            foreach (var zoneConfig in zoneConfigs)
             {
-                string fn = new FileInfo(file).Name.Replace(".flat.zone", "").Replace("_", ".");
                 
-                string[] lines = File.ReadAllLines(file);
+
+                string file = Path.Combine(basePath, zoneConfig.DataFile);
+                string flatFile = Path.Combine(basePath, zoneConfig.DataFile+".signed.flat");
+
+                string fn = zoneConfig.Name;
+
+                Console.Write($"Checking Zone {zoneConfig.Name} ... ");
+
+                bool check = DNSTools.CheckZone(zoneConfig.Name, file);
+
+                if(!check)
+                {
+                    Console.WriteLine("FAILED");
+                    Console.WriteLine(ExtToolRunner.Output);
+                    break;
+                }
+
+                Console.WriteLine("OK");
+
+                Console.WriteLine($@"Check if DNSSEC Status for {zoneConfig.Name} ... {(zoneConfig.DNSSEC ? "ENABLED" : "DISABLED")}");
+
+                bool dnssecOK = false;
+
+                if(zoneConfig.DNSSEC)
+                {
+                    Console.Write($@"Signing Zone {zoneConfig.Name} ... ");
+                    bool sign = DNSTools.SignZone(zoneConfig.Name, zoneConfig.DataFile, zoneConfig.DNSSECKey, zoneConfig.DNSSECSalt);
+                    if (!sign)
+                    {
+                        Console.WriteLine("FAILED");
+                        Console.WriteLine(ExtToolRunner.Error);
+                    }
+                    else
+                    {
+                        Console.WriteLine("OK");
+                    }
+
+                    if(sign)
+                    {
+                        Console.Write($@"Flattening Zone {zoneConfig.Name} ... ");
+                        bool flat = DNSTools.FlatZone(zoneConfig.Name, zoneConfig.DataFile+".signed");
+                        if (!flat)
+                        {
+                            Console.WriteLine("FAILED");
+                            Console.WriteLine(ExtToolRunner.Output);
+                        }
+                        else
+                        {
+                            Console.WriteLine("OK");
+                            dnssecOK = true;
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($@"Signing Zone {zoneConfig.Name} ... SKIPPED");
+                }
+
+                Console.Write($"Loading Zone {zoneConfig.Name} ... ");
+                string[] lines = File.ReadAllLines(dnssecOK ? flatFile : file);
 
                 ZoneArea zone = ZoneParser.ParseArea(fn,lines);
 
                 zones.Add(zone);
+
+                Console.WriteLine("Done");
+                Console.WriteLine();
+
             }
+
+            Console.ReadLine();
+
+            Console.WriteLine(JsonConvert.SerializeObject(zones, Formatting.Indented));
         }
 
         private static void DNS_THREAD_TCP()
@@ -144,7 +217,6 @@ namespace YukiDNS.DNS_CORE
             {
                 var ret = udp.ReceiveAsync().Result;
                 var req = ret.Buffer;
-
 
                 var dns = ParseDNSRequest(req);
 

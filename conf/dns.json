@@ -1,4 +1,5 @@
 {
   "EDNS": true,
-  "DNSSEC": false
+  "DNSSEC": false,
+  "ToolsDir": "G:\\Bind9"
 }

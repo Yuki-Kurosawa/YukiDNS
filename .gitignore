@@ -377,3 +377,4 @@ dsset-*
 *.bat
 *.csr
 .well-known
+*.flat

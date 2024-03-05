@@ -5,5 +5,7 @@
         public bool EDNS { get; set; }
 
         public bool DNSSEC { get; set; }
+
+        public string ToolsDir { get; set; }
     }
 }
