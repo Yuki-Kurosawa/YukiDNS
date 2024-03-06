@@ -38,8 +38,8 @@ namespace YukiDNS
             StartWebServer(args);
 
 
-            //Console.WriteLine("All Service Started");
-            //ACMEService.Start();
+            Console.WriteLine("All Service Started");
+            ACMEService.Start();
 
 
             Console.ReadLine();

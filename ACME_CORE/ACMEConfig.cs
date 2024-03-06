@@ -13,5 +13,7 @@
         public string ChallengeMethod { get; set; } = "HTTP-01";
 
         public int CertKeyLength { get; set; } = 2048;
+
+        public bool AutoConfig { get; set; }
     }
 }

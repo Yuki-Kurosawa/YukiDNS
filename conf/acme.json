@@ -7,5 +7,6 @@
     "test2.ksyuki.com"
   ],
   "ChallengeMethod": "HTTP-01",
-  "CertKeyLength": 2048
+  "CertKeyLength": 2048,
+  "AutoConfig": true
 }
