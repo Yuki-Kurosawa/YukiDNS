@@ -102,6 +102,11 @@ namespace YukiDNS.ACME_CORE
             Console.WriteLine("Getting Certificate ...");
             orderObj = GetOrderInfo(httpClient, orderObj.OrderID);
 
+            while(orderObj.Certificate == null)
+            {
+                orderObj = GetOrderInfo(httpClient, orderObj.OrderID);
+            }
+
             if (orderObj.Certificate != null)
             {
                 var cert = GetCertificate(httpClient, orderObj.Certificate);
@@ -129,7 +134,7 @@ namespace YukiDNS.ACME_CORE
                 OrderID = orderID,
                 FinalizeAction = jOrder.GetValue("finalize").ToString(),
                 Authorizations = authorizations,
-                Certificate = jOrder.GetValue("certificate").ToString()
+                Certificate = jOrder.GetValue("certificate")?.ToString()
             };
         }
 
