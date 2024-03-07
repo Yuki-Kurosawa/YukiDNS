@@ -67,75 +67,73 @@ namespace YukiDNS.DNS_CORE
 
                 string fn = zoneConfig.Name;
 
-                Console.Write($"Checking Zone {zoneConfig.Name} ... ");
+                ConsoleLogHelper.WriteInfoLine($"Checking Zone {zoneConfig.Name} ... ");
 
                 bool check = DNSTools.CheckZone(zoneConfig.Name, file);
 
                 if(!check)
                 {
-                    Console.WriteLine("FAILED");
-                    Console.WriteLine(ExtToolRunner.Output);
+                    ConsoleLogHelper.WriteInfoLine("FAILED", false);
+                    ConsoleLogHelper.WriteErrorLine(ExtToolRunner.Output);
                     break;
                 }
 
-                Console.WriteLine("OK");
+                ConsoleLogHelper.WriteInfoLine("OK", false);
 
-                Console.WriteLine($@"Check if DNSSEC Status for {zoneConfig.Name} ... {(zoneConfig.DNSSEC ? "ENABLED" : "DISABLED")}");
+                ConsoleLogHelper.WriteInfoLine($@"Check if DNSSEC Status for {zoneConfig.Name} ... {(zoneConfig.DNSSEC ? "ENABLED" : "DISABLED")}");
 
                 bool dnssecOK = false;
 
                 if(zoneConfig.DNSSEC)
                 {
-                    Console.Write($@"Signing Zone {zoneConfig.Name} ... ");
+                    ConsoleLogHelper.WriteInfo($@"Signing Zone {zoneConfig.Name} ... ");
                     bool sign = DNSTools.SignZone(zoneConfig.Name, zoneConfig.DataFile, zoneConfig.DNSSECKey, zoneConfig.DNSSECSalt);
                     if (!sign)
                     {
-                        Console.WriteLine("FAILED");
-                        Console.WriteLine(ExtToolRunner.Error);
+                        ConsoleLogHelper.WriteInfoLine("FAILED", false);
+                        ConsoleLogHelper.WriteWarnLine(ExtToolRunner.Error);
                         zoneConfig.DNSSEC = false;
                     }
                     else
                     {
-                        Console.WriteLine("OK");
+                        ConsoleLogHelper.WriteInfoLine("OK", false);
                     }
 
                     if(sign)
                     {
-                        Console.Write($@"Flattening Zone {zoneConfig.Name} ... ");
+                        ConsoleLogHelper.WriteInfoLine($@"Flattening Zone {zoneConfig.Name} ... ");
                         bool flat = DNSTools.FlatZone(zoneConfig.Name, zoneConfig.DataFile+".signed");
                         if (!flat)
                         {
-                            Console.WriteLine("FAILED");
-                            Console.WriteLine(ExtToolRunner.Output);
+                            ConsoleLogHelper.WriteInfoLine("FAILED",false);
+                            ConsoleLogHelper.WriteWarnLine(ExtToolRunner.Output);
                             zoneConfig.DNSSEC = false;
                         }
                         else
                         {
-                            Console.WriteLine("OK");
+                            ConsoleLogHelper.WriteInfoLine("OK", false);
                             dnssecOK = true;
                         }
                     }
                 }
                 else
                 {
-                    Console.WriteLine($@"Signing Zone {zoneConfig.Name} ... SKIPPED");
+                    ConsoleLogHelper.WriteInfoLine($@"Signing Zone {zoneConfig.Name} ... SKIPPED");
                 }
 
-                Console.Write($"Loading Zone {zoneConfig.Name} ... ");
+                ConsoleLogHelper.WriteInfoLine($"Loading Zone {zoneConfig.Name} ... ");
                 string[] lines = File.ReadAllLines(dnssecOK ? flatFile : file);
 
                 ZoneArea zone = ZoneParser.ParseArea(fn,lines);
 
                 zones.Add(zone);
 
-                Console.WriteLine("Done");
+                ConsoleLogHelper.WriteInfoLine("Done", false);
                 Console.WriteLine();
 
             }
 
-            Console.ReadLine();
-
-            Console.WriteLine(JsonConvert.SerializeObject(zones, Formatting.Indented));
+            //Console.WriteLine(JsonConvert.SerializeObject(zones, Formatting.Indented));
         }
 
         private static void DNS_THREAD_TCP()
@@ -155,18 +153,23 @@ namespace YukiDNS.DNS_CORE
 
                 req = req.Skip(2).ToArray();
 
+                try
+                {
+                    var dns = ParseDNSRequest(req);
 
-                var dns = ParseDNSRequest(req);
+                    var dret = Resolve(dns);
 
-                var dret = Resolve(dns);
+                    byte[] buf = dret.To();
 
-                byte[] buf = dret.To();
+                    str.Write(new[] { (byte)(buf.Length / 256) }, 0, 1);
+                    str.Write(new[] { (byte)(buf.Length % 256) }, 0, 1);
+                    str.Write(buf, 0, buf.Length);
+                    str.Flush();
+                }
+                catch
+                {
 
-
-                str.Write(new[] { (byte)(buf.Length / 256) }, 0, 1);
-                str.Write(new[] { (byte)(buf.Length % 256) }, 0, 1);
-                str.Write(buf, 0, buf.Length);
-                str.Flush();
+                }
                 str.Close();
                 ret.Close();
             }
@@ -194,18 +197,24 @@ namespace YukiDNS.DNS_CORE
 
                 req = req.Skip(2).ToArray();
 
+                try
+                {
+                    var dns = ParseDNSRequest(req);
 
-                var dns = ParseDNSRequest(req);
+                    var dret = Resolve(dns);
 
-                var dret = Resolve(dns);
-
-                byte[] buf = dret.To();
+                    byte[] buf = dret.To();
 
 
-                str.Write(new[] { (byte)(buf.Length / 256) }, 0, 1);
-                str.Write(new[] { (byte)(buf.Length % 256) }, 0, 1);
-                str.Write(buf, 0, buf.Length);
-                str.Flush();
+                    str.Write(new[] { (byte)(buf.Length / 256) }, 0, 1);
+                    str.Write(new[] { (byte)(buf.Length % 256) }, 0, 1);
+                    str.Write(buf, 0, buf.Length);
+                    str.Flush();
+                }
+                catch
+                {
+
+                }
                 str.Close();
                 ret.Close();
             }
@@ -220,12 +229,19 @@ namespace YukiDNS.DNS_CORE
                 var ret = udp.ReceiveAsync().Result;
                 var req = ret.Buffer;
 
-                var dns = ParseDNSRequest(req);
+                try
+                {
+                    var dns = ParseDNSRequest(req);
 
-                var dret = Resolve(dns);
+                    var dret = Resolve(dns);
 
-                byte[] buf = dret.To();
-                udp.Send(buf, buf.Length, ret.RemoteEndPoint);
+                    byte[] buf = dret.To();
+                    udp.Send(buf, buf.Length, ret.RemoteEndPoint);
+                }
+                catch
+                {
+
+                }
             }
         }
 
@@ -784,7 +800,7 @@ namespace YukiDNS.DNS_CORE
 
                 for (var i = 1; i <= zds.Count; i++)
                 {
-                    string zone = zds[i - 1].Data[2].ToString();
+                    string zone = zds[i - 1].Data[2].ToString().Trim('"');
                     string tag = zds[i - 1].Data[1].ToString();
                     var a = RRData.BuildResponse_CAA(query.byteData, zds[i-1].TTL, (ushort)(zone.Length + tag.Length + 2),
                         (ushort)zds[i - 1].Data[0], (ushort)tag.Length, tag, zone);
@@ -908,6 +924,8 @@ namespace YukiDNS.DNS_CORE
 
         public static DNSRequest ParseDNSRequest(byte[] req)
         {
+            ConsoleLogHelper.WriteInfoLine($@"Received Pure DNS Request: {Convert.ToBase64String(req)}");
+
             DNSRequest dns = DNSRequest.From(req);
 
             string Name = "";
@@ -922,6 +940,24 @@ namespace YukiDNS.DNS_CORE
                 }
             }
             Name = Name.FromDNSName();
+
+
+            RRQuery query = dns.RRQueries[0];
+            RRData opt = null;
+
+            if (dns.Addtional > 0)
+            {
+                opt = dns.RRAdditional[0];                
+            }
+
+            if (opt == null)
+            {
+                ConsoleLogHelper.WriteInfoLine($@"DNS Request Data: Transaction ID [{dns.TransactionID}], Query Data: [{Name}/{query.Class}/{query.Type}], EDNS Data: [null]");
+            }
+            else
+            {
+                ConsoleLogHelper.WriteInfoLine($@"DNS Request Data: Transaction ID [{dns.TransactionID}], Query Data: [{Name}/{query.Class}/{query.Type}], EDNS Data: [EDNS {opt.OPTData.VERSION}/{opt.OPTData.Z}/{opt.OPTData.DO}/{opt.OPTData.RCODE}]");
+            }
 
             //Console.WriteLine(dns.TransactionID.ToString() + " " + (dns.IsResponse ? "RESP" : "REQ") + " " + dns.OpCode.ToString() +
             //    " " + dns.Query.ToString() + " " + dns.Answer.ToString() + " " + dns.Authority.ToString() + " " + dns.Addtional.ToString() +

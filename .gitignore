@@ -378,3 +378,4 @@ dsset-*
 *.csr
 .well-known
 *.flat
+*log*.*

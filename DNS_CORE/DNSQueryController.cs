@@ -14,13 +14,20 @@ namespace YukiDNS.DNS_CORE
             byte[] req = new byte[(int)HttpContext.Request.ContentLength];
             sr.Read(req,0, req.Length);
 
-            var dns = DNSService.ParseDNSRequest(req);
+            try
+            {
+                var dns = DNSService.ParseDNSRequest(req);
 
-            var dret = DNSService.Resolve(dns);
+                var dret = DNSService.Resolve(dns);
 
-            byte[] buf = dret.To();
+                byte[] buf = dret.To();
 
-            return File(buf,"application/dns-message");
+                return File(buf, "application/dns-message");
+            }
+            catch
+            {
+                return NotFound();
+            }
         }
 
         [HttpGet(), Route("/dns-query")]
@@ -28,13 +35,20 @@ namespace YukiDNS.DNS_CORE
         {
             byte[] req = Convert.FromBase64String(dns);
 
-            var qdns = DNSService.ParseDNSRequest(req);
+            try
+            {
+                var qdns = DNSService.ParseDNSRequest(req);
 
-            var dret = DNSService.Resolve(qdns);
+                var dret = DNSService.Resolve(qdns);
 
-            byte[] buf = dret.To();
+                byte[] buf = dret.To();
 
-            return File(buf, "application/dns-message");
+                return File(buf, "application/dns-message");
+            }
+            catch
+            {
+                return NotFound();
+            }
         }
     }
 }

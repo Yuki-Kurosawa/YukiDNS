@@ -552,9 +552,6 @@ namespace YukiDNS.DNS_RFC
                 ret.OPTData = ParseOPTData(ret.TTL);
             }
 
-            //Console.WriteLine(JsonConvert.SerializeObject(ret.RDLength));
-            //Console.WriteLine(JsonConvert.SerializeObject(ret.RDData));
-            //Console.WriteLine(JsonConvert.SerializeObject(ret.OPTData));
             return ret;
         }
 

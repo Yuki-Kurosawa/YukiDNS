@@ -16,6 +16,7 @@ using YukiDNS.ACME_CORE;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel;
+using YukiDNS.COMMON_CORE;
 
 namespace YukiDNS
 {
@@ -38,7 +39,7 @@ namespace YukiDNS
             StartWebServer(args);
 
 
-            Console.WriteLine("All Service Started");
+            ConsoleLogHelper.WriteInfoLine("All Service Started");
             ACMEService.Start();
 
 

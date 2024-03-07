@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using YukiDNS.COMMON_CORE;
 using YukiDNS.DNS_RFC;
 
 namespace YukiDNS.DNS_CORE
@@ -232,7 +233,7 @@ namespace YukiDNS.DNS_CORE
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message + ":" + line2.Split(' ')[3]);
+                    ConsoleLogHelper.WriteErrorLine("DNS Zone Line Parse Error : " + ex.Message + Environment.NewLine + line2.Split(' ')[3]);
                 }
 
                 
