@@ -67,7 +67,7 @@ namespace YukiDNS.DNS_CORE
 
                 string fn = zoneConfig.Name;
 
-                ConsoleLogHelper.WriteInfoLine($"Checking Zone {zoneConfig.Name} ... ");
+                ConsoleLogHelper.WriteInfo($"Checking Zone {zoneConfig.Name} ... ");
 
                 bool check = DNSTools.CheckZone(zoneConfig.Name, file);
 
@@ -101,7 +101,7 @@ namespace YukiDNS.DNS_CORE
 
                     if(sign)
                     {
-                        ConsoleLogHelper.WriteInfoLine($@"Flattening Zone {zoneConfig.Name} ... ");
+                        ConsoleLogHelper.WriteInfo($@"Flattening Zone {zoneConfig.Name} ... ");
                         bool flat = DNSTools.FlatZone(zoneConfig.Name, zoneConfig.DataFile+".signed");
                         if (!flat)
                         {
@@ -121,7 +121,7 @@ namespace YukiDNS.DNS_CORE
                     ConsoleLogHelper.WriteInfoLine($@"Signing Zone {zoneConfig.Name} ... SKIPPED");
                 }
 
-                ConsoleLogHelper.WriteInfoLine($"Loading Zone {zoneConfig.Name} ... ");
+                ConsoleLogHelper.WriteInfo($"Loading Zone {zoneConfig.Name} ... ");
                 string[] lines = File.ReadAllLines(dnssecOK ? flatFile : file);
 
                 ZoneArea zone = ZoneParser.ParseArea(fn,lines);
