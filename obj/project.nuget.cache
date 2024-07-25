@@ -1,11 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "2c6V5FHRf3TbtDmA8SB5NVRYIYb+4wjP/nxmiv8iH4q6GFNWg1zSziVN5lYyd+PzgpxEAMDdMiZM9lHxOzO9Ew==",
+  "dgSpecHash": "EaZoSiyMaTk=",
   "success": true,
   "projectFilePath": "E:\\Github\\YukiDNS\\YukiDNS.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\Yuki\\.nuget\\packages\\bouncycastle.cryptography\\2.2.1\\bouncycastle.cryptography.2.2.1.nupkg.sha512",
-    "C:\\Users\\Yuki\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512"
+    "C:\\Users\\Yuki\\.nuget\\packages\\bouncycastle.cryptography\\2.4.0\\bouncycastle.cryptography.2.4.0.nupkg.sha512",
+    "C:\\Users\\Yuki\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
+    "C:\\Users\\Yuki\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.4\\microsoft.windowsdesktop.app.ref.8.0.4.nupkg.sha512",
+    "C:\\Users\\Yuki\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.4\\microsoft.netcore.app.ref.8.0.4.nupkg.sha512",
+    "C:\\Users\\Yuki\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.4\\microsoft.aspnetcore.app.ref.8.0.4.nupkg.sha512",
+    "C:\\Users\\Yuki\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.4\\microsoft.netcore.app.host.win-x64.8.0.4.nupkg.sha512"
   ],
   "logs": []
 }
