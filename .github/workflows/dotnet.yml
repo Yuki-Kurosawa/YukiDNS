@@ -22,7 +22,7 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
     - name: Install DNS Utils
-      run: sudo apt install dnsutils -y
+      run: sudo apt install dnsutils bind9-utils -y
     - name: Kill Systemd Resolve
       run: sudo service systemd-resolved stop
     - name: Run DNS Service
