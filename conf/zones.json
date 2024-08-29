@@ -1,18 +1,3 @@
 [
-  {
-    "Name": "e1.ksyuki.com",
-    "DNSSEC": true,
-    "DNSSECKey": "Ke1.ksyuki.com.+013+35080.private",
-    "DNSSECKeyRecord": "Ke1.ksyuki.com.+013+35080.key",
-    "DNSSECSalt": "123456",
-    "DataFile": "e1_ksyuki_com.zone"
-  },
-  {
-    "Name": "ns1.e1.ksyuki.com",
-    "DNSSEC": true,
-    "DNSSECKey": "Kns1.e1.ksyuki.com.+013+63366.private",
-    "DNSSECKeyRecord": "Kns1.e1.ksyuki.com.+013+63366.key",
-    "DNSSECSalt": "",
-    "DataFile": "ns1_e1_ksyuki_com.zone"
-  }
+  
 ]
