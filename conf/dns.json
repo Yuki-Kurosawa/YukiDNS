@@ -1,5 +1,5 @@
 {
   "EDNS": true,
   "DNSSEC": false,
-  "ToolsDir": "G:\\Bind9"
+  "ToolsDir": "/usr/bin"
 }

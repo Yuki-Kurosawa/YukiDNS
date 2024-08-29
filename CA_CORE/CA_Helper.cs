@@ -15,9 +15,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.OpenSsl;
-using Newtonsoft.Json;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 using Org.BouncyCastle.Crypto;
+using System.Security.Cryptography.X509Certificates;
 
 namespace YukiDNS.CA_CORE
 {
@@ -213,5 +212,13 @@ namespace YukiDNS.CA_CORE
             File.WriteAllText(config.CertDir + "user.pem", ca2);
         }
 
+
+        public static X509Certificate2 LoadPEMCert(string certFile,string keyFile=null)
+        {
+
+            X509Certificate2 crt = X509Certificate2.CreateFromPemFile(certFile, keyFile);
+
+            return crt;
+        }
     }
 }

@@ -40,7 +40,9 @@ namespace YukiDNS
 
 
             ConsoleLogHelper.WriteInfoLine("All Service Started");
-            ACMEService.Start();
+            //ACMEService.Start();
+            
+
 
 
             Console.ReadLine();
