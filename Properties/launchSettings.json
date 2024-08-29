@@ -9,7 +9,7 @@
       "commandName": "WSL2",
       "executablePath": "dotnet",
       "commandLineArgs": "\"{OutDir}/YukiDNS.dll\" dns",
-      "distributionName": "ubuntu-22.04"
+      "distributionName": "ubuntu"
     }
   }
 }

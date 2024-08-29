@@ -187,7 +187,7 @@ namespace YukiDNS.DNS_CORE
 
                 var str = new SslStream(ret.GetStream());
 
-                X509Certificate x509 = new X509Certificate("D:\\Github\\YukiDNS\\bin\\Debug\\net6.0\\certs\\ca.pfx", "123456");
+                X509Certificate x509 = CA_Helper.LoadPEMCert("dns.crt","dns.pem");
 
                 str.AuthenticateAsServer(x509);
 
