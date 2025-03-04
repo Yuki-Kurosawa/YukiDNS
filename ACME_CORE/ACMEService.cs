@@ -213,10 +213,6 @@ namespace YukiDNS.ACME_CORE
 
         private static bool ProceedHTTP01Challenge(HttpClient httpClient, string nonce, RSAParameters acmeKey, string kid, string authUrl, ACMEAuthObject authObj)
         {
-            if (!Directory.Exists(".well-known/acme-challenge"))
-            {
-                Directory.CreateDirectory(".well-known/acme-challenge");
-            }
 
             var httpAuthToken = authObj.challenges.Where(k => k.type == "http-01").ToList()[0].token;
 
@@ -233,6 +229,10 @@ namespace YukiDNS.ACME_CORE
             }
             else
             {
+                if (!Directory.Exists(".well-known/acme-challenge"))
+                {
+                    Directory.CreateDirectory(".well-known/acme-challenge");
+                }
                 File.WriteAllText($".well-known/acme-challenge/{httpAuthToken}", httpAuthDigest);
             }
 
