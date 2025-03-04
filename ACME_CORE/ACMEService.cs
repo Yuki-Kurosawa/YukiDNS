@@ -223,15 +223,17 @@ namespace YukiDNS.ACME_CORE
             string httpAuthDigest = GetHTTP01AuthToken(httpAuthToken, acmeKey);
 
             Console.WriteLine($"Please place a file named \".well_known/acme-challenge/{httpAuthToken}\" with content:");
-            Console.WriteLine(httpAuthDigest);
-
-            File.WriteAllText($".well-known/acme-challenge/{httpAuthToken}", httpAuthDigest);
+            Console.WriteLine(httpAuthDigest);            
 
             Console.WriteLine("Please press enter key if record is ready");
 
             if (!config.AutoConfig)
             {
                 Console.ReadLine();
+            }
+            else
+            {
+                File.WriteAllText($".well-known/acme-challenge/{httpAuthToken}", httpAuthDigest);
             }
 
             TriggerAuthorization(httpClient, nonce, kid, acmeKey, authObj.challenges.Where(k => k.type == "http-01").ToList()[0]);
@@ -287,6 +289,10 @@ namespace YukiDNS.ACME_CORE
             if (!config.AutoConfig)
             {
                 Console.ReadLine();
+            }
+            else
+            {
+                // TODO: Auto DNS record update
             }
 
             TriggerAuthorization(httpClient, nonce, kid, acmeKey, authObj.challenges.Where(k => k.type == "dns-01").ToList()[0]);
