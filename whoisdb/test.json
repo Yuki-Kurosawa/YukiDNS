@@ -1,0 +1,79 @@
+{
+  // BASIC INFO
+  "DomainName": "test.yuki",
+  "RegistryDomainID": "DN195465-YUKI",
+  "RegistryWHOISServer": "whois.nic.yuki",
+  "RegistrarURL": "https://domains.yuki/",
+  "UpdatedDate": "2025-01-01T00:00:00Z",
+  "CreationDate": "2025-01-01T00:00:00Z",
+  "RegistryExpiryDate": "2026-01-01T00:00:00Z",
+  "Registrar": "Yuki Network Service Inc.",
+  "RegistrarIANAID": 1632,
+  "RegistrarAbuseContactEmail": "support@domains.yuki",
+  "RegistrarAbuseContactPhone": "+85268456485",
+  "DomainStatus": [
+    "Ok",
+    "ClientTransferProhibited"
+  ],
+
+  // CONTACT INFO
+  "Registrant": {
+    "ID": "USER195468-YUKI",
+    "Name": "Yuki Kurosawa",
+    "Organization": "Yuki Network Service Inc.",
+    "Street": "1/F, 1-3 Tai Yuen Street",
+    "City": "Tai Po",
+    "StateProvince": "Kowloon",
+    "PostalCode": "HK85675",
+    "Country": "HK",
+    "Phone": "+85256745687",
+    "Fax": "+85256745688",
+    "Email": "yuki@yuki.hk"
+  },
+  "Admin": {
+    "ID": "USER195468-YUKI",
+    "Name": "Yuki Kurosawa",
+    "Organization": "Yuki Network Service Inc.",
+    "Street": "1/F, 1-3 Tai Yuen Street",
+    "City": "Tai Po",
+    "StateProvince": "Kowloon",
+    "PostalCode": "HK85675",
+    "Country": "HK",
+    "Phone": "+85256745687",
+    "Fax": "+85256745688",
+    "Email": "yuki@yuki.hk"
+  },
+  "Tech": {
+    "ID": "USER195468-YUKI",
+    "Name": "Yuki Kurosawa",
+    "Organization": "Yuki Network Service Inc.",
+    "Street": "1/F, 1-3 Tai Yuen Street",
+    "City": "Tai Po",
+    "StateProvince": "Kowloon",
+    "PostalCode": "HK85675",
+    "Country": "HK",
+    "Phone": "+85256745687",
+    "Fax": "+85256745688",
+    "Email": "yuki@yuki.hk"
+  },
+  "Billing": {
+    "ID": "USER195468-YUKI",
+    "Name": "Yuki Kurosawa",
+    "Organization": "Yuki Network Service Inc.",
+    "Street": "1/F, 1-3 Tai Yuen Street",
+    "City": "Tai Po",
+    "StateProvince": "Kowloon",
+    "PostalCode": "HK85675",
+    "Country": "HK",
+    "Phone": "+85256745687",
+    "Fax": "+85256745688",
+    "Email": "yuki@yuki.hk"
+  },
+
+  // NAME SERVER INFO
+  "NameServer": [
+    "ns1.domains.yuki",
+    "ns2.domains.yuki"
+  ]
+
+}

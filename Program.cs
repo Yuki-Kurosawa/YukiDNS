@@ -17,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel;
 using YukiDNS.COMMON_CORE;
+using YukiDNS.WHOIS_CORE;
 
 namespace YukiDNS
 {
@@ -32,10 +33,12 @@ namespace YukiDNS
             DNSService.LoadZoneData();
             DNSService.LoadZoneFiles();
             CA_Service.LoadConfig();
+            WHOISService.LoadConfig();
             ACMEService.LoadConfig();
 
             //Start Services
             DNSService.Start();
+            WHOISService.Start();
             StartWebServer(args);
 
 
