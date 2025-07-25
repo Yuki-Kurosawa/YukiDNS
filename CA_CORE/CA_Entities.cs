@@ -10,4 +10,11 @@
         public string Name { get; set; }
         public string CAName { get; set; }
     }
+
+    public class WebServerCertRequest
+    {
+        public string Name { get; set; }
+
+        public string DNSNames { get; set; }
+    }
 }

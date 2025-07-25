@@ -3,6 +3,8 @@ using Org.BouncyCastle.Security;
 using System;
 using System.IO;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+
 using F=System.IO.File;
 
 namespace YukiDNS.CA_CORE
@@ -18,6 +20,7 @@ namespace YukiDNS.CA_CORE
             if (F.Exists(certPath))
             {
                 return StatusCode(403, "Root CA Initialzed, DO NOT try to initialize again");
+
             }
 
             if (req == null || string.IsNullOrEmpty(req.Name))
@@ -72,6 +75,37 @@ namespace YukiDNS.CA_CORE
             string subcaPath = Path.Combine(CA_Service.config.CertDir, "subca.crt");
             return File(F.ReadAllBytes(subcaPath), "text/x509-certificate");
         }
+
+        [HttpPost("GenWebServerCert")]
+        public IActionResult GenWebServerCert([FromBody] WebServerCertRequest request)
+        {
+            string name = string.IsNullOrEmpty(request?.Name) ? "defaultServer" : request.Name;
+
+            var keyr = new RSACryptoServiceProvider(CA_Service.config.KeySize);
+            var key = DotNetUtilities.GetRsaKeyPair(keyr);
+
+            string subCaCertPath = Path.Combine(CA_Service.config.CertDir, "subca.crt");
+            string subCaKeyPath = Path.Combine(CA_Service.config.CertDir, "subca.pem");
+
+            if (!F.Exists(subCaCertPath) || !F.Exists(subCaKeyPath))
+            {
+                return StatusCode(404, "Sub CA certificate or key not found. Please initialize Sub CA first.");
+            }
+
+            var subCaCert = new X509Certificate2(F.ReadAllBytes(subCaCertPath));
+            string caname = subCaCert.Subject;
+
+            var subCaKeyPem = F.ReadAllText(subCaKeyPath);
+            var subCaKeyRsa = RSACryptoHelper.PemToRSAKey(subCaKeyPem);
+            var subCaKey = DotNetUtilities.GetRsaKeyPair(subCaKeyRsa);
+
+            CA_Helper.GenerateWebServerCert(CA_Service.config, caname, name, dnsNames, subCaKey, key);
+
+            string userCertPath = Path.Combine(CA_Service.config.CertDir, "user.crt");
+            return File(F.ReadAllBytes(userCertPath), "text/x509-certificate");
+        }
+
+        
 
     }
 }
