@@ -80,8 +80,9 @@ namespace YukiDNS.CA_CORE
         public IActionResult GenWebServerCert([FromBody] WebServerCertRequest request)
         {
             string name = string.IsNullOrEmpty(request?.Name) ? "defaultServer" : request.Name;
+			string dnsNames = request?.DNSNames ?? "";
 
-            var keyr = new RSACryptoServiceProvider(CA_Service.config.KeySize);
+			var keyr = new RSACryptoServiceProvider(CA_Service.config.KeySize);
             var key = DotNetUtilities.GetRsaKeyPair(keyr);
 
             string subCaCertPath = Path.Combine(CA_Service.config.CertDir, "subca.crt");
