@@ -162,7 +162,6 @@ namespace YukiDNS.CA_CORE
             subgen.AddExtension(X509Extensions.ExtendedKeyUsage, false, new ExtendedKeyUsage(
                 new DerObjectIdentifier[] {
                     KeyPurposeID.id_kp_serverAuth,
-                    KeyPurposeID.id_kp_clientAuth,
                     new DerObjectIdentifier("1.2.3.4.5.6")
                 }));
             subgen.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(false));
