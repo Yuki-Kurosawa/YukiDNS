@@ -37,15 +37,15 @@ namespace YukiDNS
             ACMEService.LoadConfig();
 
             //Start Services
-            DNSService.Start();
-            WHOISService.Start();
+            //DNSService.Start();
+            //WHOISService.Start();
             StartWebServer(args);
 
 
-            ConsoleLogHelper.WriteInfoLine("All Service Started");
+            //ConsoleLogHelper.WriteInfoLine("All Service Started");
             //ACMEService.Start();
             
-
+            //CA_Service.Main(args);
 
 
             Console.ReadLine();

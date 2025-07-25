@@ -64,7 +64,7 @@ namespace YukiDNS.CA_CORE
                 name = config.DefaultSelfSignCAName;
             }
 
-            
+
             var keyr = new RSACryptoServiceProvider(config.KeySize);
             var key = DotNetUtilities.GetRsaKeyPair(keyr);
 
@@ -73,7 +73,7 @@ namespace YukiDNS.CA_CORE
             Console.WriteLine("Cert is generated, press any key to exit");
             Console.ReadKey();
 
-            
+
 
         }
 
@@ -100,11 +100,11 @@ namespace YukiDNS.CA_CORE
                 caname = config.DefaultSelfSignCAName;
             }
 
-            
+
             var keyr = new RSACryptoServiceProvider(config.KeySize);
             var key = DotNetUtilities.GetRsaKeyPair(keyr);
 
-            var capem=File.ReadAllText(config.CertDir+"ca.pem");
+            var capem = File.ReadAllText(config.CertDir + "ca.pem");
             var cakeyr = RSACryptoHelper.PemToRSAKey(capem);
             var cakey = DotNetUtilities.GetRsaKeyPair(cakeyr);
 
@@ -113,7 +113,7 @@ namespace YukiDNS.CA_CORE
             Console.WriteLine("Cert is generated, press any key to exit");
             Console.ReadKey();
 
-            
+
         }
 
         public static void GenerateWebServer()
@@ -142,7 +142,7 @@ namespace YukiDNS.CA_CORE
             Console.WriteLine("Please Input Your SANs as comma-separated string:");
             string sans = Console.ReadLine();
 
-            
+
             var keyr = new RSACryptoServiceProvider(config.KeySize);
             var key = DotNetUtilities.GetRsaKeyPair(keyr);
 
@@ -150,12 +150,12 @@ namespace YukiDNS.CA_CORE
             var cakeyr = RSACryptoHelper.PemToRSAKey(capem);
             var cakey = DotNetUtilities.GetRsaKeyPair(cakeyr);
 
-            CA_Helper.GenerateWebServerCert(config, caname, name,sans, cakey, key);
+            CA_Helper.GenerateWebServerCert(config, caname, name, sans, cakey, key);
 
             Console.WriteLine("Cert is generated, press any key to exit");
             Console.ReadKey();
 
-            
+
         }
 
     }

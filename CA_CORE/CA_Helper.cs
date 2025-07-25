@@ -22,7 +22,7 @@ namespace YukiDNS.CA_CORE
 {
     public class CA_Helper
     {
-        public static void GenerateSelfSignCert(CA_Config config,string name,AsymmetricCipherKeyPair key)
+        public static void GenerateSelfSignCert(CA_Config config, string name, AsymmetricCipherKeyPair key)
         {
             Asn1SignatureFactory asn = new Asn1SignatureFactory(config.SignMethod, key.Private, new SecureRandom());
             var gen = new X509V3CertificateGenerator();
@@ -45,7 +45,7 @@ namespace YukiDNS.CA_CORE
                 }));
             gen.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(3));
             gen.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyEncipherment | KeyUsage.CrlSign | KeyUsage.KeyCertSign));
-                      
+
 
             if (config.AIAConfig.UseAIA)
             {
@@ -86,9 +86,10 @@ namespace YukiDNS.CA_CORE
             using (var fs = File.Create(config.CertDir + "ca.pfx"))
             {
                 store.Save(fs, "123456".ToCharArray(), random); //保存  
-            };
+            }
+            ;
 
-            X509ExtensionsGenerator sg = new X509ExtensionsGenerator();           
+            X509ExtensionsGenerator sg = new X509ExtensionsGenerator();
             X509Extensions sans = sg.Generate();
             Asn1Set asn1 = new DerSet(new AttributeX509(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(sans)));
 
@@ -99,7 +100,7 @@ namespace YukiDNS.CA_CORE
             string ca3 = pb3.ToString();
             File.WriteAllText(config.CertDir + "ca.csr", ca3);
         }
-    
+
         public static void GenerateLayer2Cert(CA_Config config, string caname, string name, AsymmetricCipherKeyPair cakey, AsymmetricCipherKeyPair key)
         {
             Asn1SignatureFactory subasn = new Asn1SignatureFactory("SHA256withRSA", cakey.Private, new SecureRandom());
@@ -142,7 +143,7 @@ namespace YukiDNS.CA_CORE
             File.WriteAllText(config.CertDir + "subca.pem", ca2);
         }
 
-        public static void GenerateWebServerCert(CA_Config config, string caname, string name,string dnsnames, AsymmetricCipherKeyPair cakey, AsymmetricCipherKeyPair key)
+        public static void GenerateWebServerCert(CA_Config config, string caname, string name, string dnsnames, AsymmetricCipherKeyPair cakey, AsymmetricCipherKeyPair key)
         {
             Asn1SignatureFactory subasn = new Asn1SignatureFactory("SHA256withRSA", cakey.Private, new SecureRandom());
 
@@ -173,14 +174,14 @@ namespace YukiDNS.CA_CORE
 
             string[] dnsnamelist = dnsnames.Split(',');
 
-            foreach(string dnsname in dnsnamelist)
+            foreach (string dnsname in dnsnamelist)
             {
                 if (!string.IsNullOrEmpty(dnsname.Trim()))
                 {
                     gnsl.Add(new GeneralName(GeneralName.DnsName, dnsname.Trim()));
                 }
             }
-            
+
             //new GeneralNames(new GeneralName[] {
             //        new GeneralName(GeneralName.DnsName,"localhost"),
             //        new GeneralName(GeneralName.IPAddress,"127.0.0.1"),
@@ -191,7 +192,7 @@ namespace YukiDNS.CA_CORE
 
             if (gnsl.Count > 0)
             {
-                gns1=new GeneralNames(gnsl.ToArray());
+                gns1 = new GeneralNames(gnsl.ToArray());
                 subgen.AddExtension(X509Extensions.SubjectAlternativeName, false, gns1.ToAsn1Object());
 
             }
@@ -212,7 +213,7 @@ namespace YukiDNS.CA_CORE
         }
 
 
-        public static X509Certificate2 LoadPEMCert(string certFile,string keyFile=null)
+        public static X509Certificate2 LoadPEMCert(string certFile, string keyFile = null)
         {
 
             X509Certificate2 crt = X509Certificate2.CreateFromPemFile(certFile, keyFile);
