@@ -1,6 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Nist;
+using Org.BouncyCastle.Asn1.Ocsp;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Operators;
+using Org.BouncyCastle.Ocsp;
 using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Utilities.IO.Pem;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -106,7 +115,77 @@ namespace YukiDNS.CA_CORE
             return File(F.ReadAllBytes(userCertPath), "text/x509-certificate");
         }
 
-        
+        [HttpPost("/ocsp")]
+        public IActionResult OCSP()
+        {
+            var capem = F.ReadAllText(CA_Service.config.CertDir + "ca.pem");
+            var cacert = F.ReadAllText(CA_Service.config.CertDir + "ca.crt");
+            var cakeyr = RSACryptoHelper.PemToRSAKey(capem);
+            var cakey = DotNetUtilities.GetRsaKeyPair(cakeyr);
+
+            X509Certificate2 cert = CA_Helper.LoadPEMCert(CA_Service.config.CertDir + "ca.crt", CA_Service.config.CertDir + "ca.pem");
+
+
+            // 2. 解析 OCSP 请求（这部分需要从 Request.Body 读取）
+            // 假设你从 Request.Body 读取了请求字节 `requestBytes`
+            byte[] requestBytes;
+            using (var ms = new MemoryStream())
+            {
+                Request.Body.CopyTo(ms); // 同步读取，如果你没有异步，否则用 CopyToAsync
+                requestBytes = ms.ToArray();
+            }
+
+            OcspReq ocspReq;
+            try
+            {
+                ocspReq = new OcspReq(requestBytes);
+            }
+            catch (Exception ex)
+            {
+                // 请求格式错误，返回一个错误响应
+                OCSPRespGenerator errGen = new OCSPRespGenerator();
+                return File(errGen.Generate((int)OcspRespStatus.MalformedRequest, null).GetEncoded(), "application/ocsp-response");
+            }
+
+            // 假设只处理第一个证书查询
+            Req singleRequest = ocspReq.GetRequestList()[0];
+            CertificateID certId = singleRequest.GetCertID();
+
+            // 3. 查询证书状态（替换为你的实际逻辑）
+            CertificateStatus certStatus = Org.BouncyCastle.Ocsp.CertificateStatus.Good; // 假设是Good
+            //CertificateStatus certStatus = new RevokedStatus(DateTime.Now, CrlReason.CACompromise); // 假设是Good
+
+            // --- 构造 Basic OCSP 响应 ---
+            BasicOcspRespGenerator basicGen = new BasicOcspRespGenerator(
+                cakey.Public
+            );
+            basicGen.AddResponse(certId, certStatus); // 添加证书状态
+
+            var clientExtensions = ocspReq.RequestExtensions; // 应该从 ocspReq 获取，而不是 request
+            if (clientExtensions != null)
+            {
+                Org.BouncyCastle.Asn1.X509.X509Extension nonceExtension = clientExtensions.GetExtension(OcspObjectIdentifiers.PkixOcspNonce);
+                if (nonceExtension != null)
+                {
+                    basicGen.SetResponseExtensions(new X509Extensions(new Dictionary<DerObjectIdentifier, Org.BouncyCastle.Asn1.X509.X509Extension>() { { OcspObjectIdentifiers.PkixOcspNonce, nonceExtension } }));
+                }
+            }
+
+
+            // 签名 Basic OCSP 响应
+            Org.BouncyCastle.X509.X509Certificate[] chain = { DotNetUtilities.FromX509Certificate(cert) }; // 响应者证书链
+            BasicOcspResp basicResp = basicGen.Generate("SHA256withRSA", cakey.Private, chain, DateTime.UtcNow);
+
+
+            // --- 封装到 ResponseBytes 并生成最终 OcspResp ---
+            OCSPRespGenerator rg = new OCSPRespGenerator(); // 重新创建或复用
+            var rr = rg.Generate(
+                (int)OcspResponseStatus.Successful,
+                basicResp // 提供实际数据
+            );
+
+            return File(rr.GetEncoded(), "application/ocsp-response");
+        }
 
     }
 }

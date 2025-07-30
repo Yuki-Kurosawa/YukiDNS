@@ -5,9 +5,9 @@
   "CACertExpire": 1825,
   "EndUserCertExpire": 90,
   "AIAConfig": {
-    "UseAIA": false,
-    "CAIssuer": "http://localhost/ca.cer",
-    "OCSPMethod": "http://localhost/ocsp"
+    "UseAIA": true,
+    "CAIssuer": "http://localhost:880/ca.cer",
+    "OCSPMethod": "http://localhost:880/ocsp"
   },
   "CertDir": "certs/",
   "DefaultSelfSignCAName": "CN=Test Root CA,OU=ca.example.com,O=TestCert,L=Chiyodaku,ST=Tokyo,C=JP",
