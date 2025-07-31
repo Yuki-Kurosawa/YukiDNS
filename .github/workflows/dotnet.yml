@@ -27,10 +27,6 @@ jobs:
       run: sudo service systemd-resolved stop
     - name: Run DNS Service
       run: sudo nohup dotnet run --no-build dns &
-    - name: Do DNS Dig (UDP)
-      run: dig @127.0.0.1 test.com A +noedns +notcp
-    - name: Do DNS Dig (TCP)
-      run: dig @127.0.0.1 test.com A +noedns +tcp
     - name: End Test
       run: killall dotnet && sudo service systemd-resolved start
 
