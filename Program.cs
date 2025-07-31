@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel;
 using YukiDNS.COMMON_CORE;
 using YukiDNS.WHOIS_CORE;
+using YukiDNS.MAIL_CORE;
 
 namespace YukiDNS
 {
@@ -39,7 +40,8 @@ namespace YukiDNS
             //Start Services
             //DNSService.Start();
             //WHOISService.Start();
-            StartWebServer(args);
+            SMTPService.Start();
+            //StartWebServer(args);
 
 
             //ConsoleLogHelper.WriteInfoLine("All Service Started");
