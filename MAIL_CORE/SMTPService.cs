@@ -67,7 +67,7 @@ namespace YukiDNS.MAIL_CORE
                     while (client.Connected && (requestLine = reader.ReadLine()) != null)
                     {
                         string request = requestLine.Trim();
-                        if (string.IsNullOrEmpty(request)) continue;
+                        
 
                         Console.WriteLine($"Received: {request}");
 
@@ -115,6 +115,8 @@ namespace YukiDNS.MAIL_CORE
                         else
                         {
                             // Process SMTP commands
+                            if (string.IsNullOrEmpty(request)) continue;
+
                             string command = request.ToUpper();
                             if (command.StartsWith("EHLO ") || command.StartsWith("HELO "))
                             {
