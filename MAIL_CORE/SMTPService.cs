@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic; // Required for List<string>
-using System.IO; // Required for StreamReader and StreamWriter
+using System.Collections.Generic;
+using System.IO; // Required for StreamReader, StreamWriter, and File operations
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -11,11 +11,21 @@ namespace YukiDNS.MAIL_CORE
 {
     public class SMTPService
     {
+        // Define the directory where received emails will be saved
+        private static readonly string EmailSaveDirectory = "ReceivedEmails";
+
         public static void Start()
         {
+            // Ensure the save directory exists
+            if (!Directory.Exists(EmailSaveDirectory))
+            {
+                Directory.CreateDirectory(EmailSaveDirectory);
+            }
+
             Thread smtp = new Thread(SMTP_THREAD_TCP);
             smtp.Start();
             Console.WriteLine("SMTPService started, listening on port 25...");
+            Console.WriteLine($"Emails will be saved to: {Path.GetFullPath(EmailSaveDirectory)}");
         }
 
         private static void SMTP_THREAD_TCP()
@@ -29,15 +39,15 @@ namespace YukiDNS.MAIL_CORE
                 // Accept a new client connection
                 TcpClient client = null;
                 NetworkStream stream = null;
-                StreamReader reader = null; // New: For reading lines
-                StreamWriter writer = null; // New: For writing lines
+                StreamReader reader = null;
+                StreamWriter writer = null;
 
                 try
                 {
                     client = tcp.AcceptTcpClientAsync().Result;
                     stream = client.GetStream();
-                    reader = new StreamReader(stream, Encoding.ASCII); // Initialize StreamReader
-                    writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true }; // Initialize StreamWriter
+                    reader = new StreamReader(stream, Encoding.ASCII);
+                    writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
 
                     Console.WriteLine($"Client connected from {((IPEndPoint)client.Client.RemoteEndPoint).Address}");
 
@@ -54,10 +64,10 @@ namespace YukiDNS.MAIL_CORE
                     SendResponse(writer, "220 localhost.ksyuki.com SMTP Service Ready");
 
                     string requestLine;
-                    while (client.Connected && (requestLine = reader.ReadLine()) != null) // Read line by line
+                    while (client.Connected && (requestLine = reader.ReadLine()) != null)
                     {
-                        string request = requestLine.Trim(); // Trim whitespace including CRLF
-                        if (string.IsNullOrEmpty(request)) continue; // Ignore empty lines
+                        string request = requestLine.Trim();
+                        if (string.IsNullOrEmpty(request)) continue;
 
                         Console.WriteLine($"Received: {request}");
 
@@ -68,26 +78,38 @@ namespace YukiDNS.MAIL_CORE
                             if (request == ".")
                             {
                                 Console.WriteLine("End of DATA received.");
-                                Console.WriteLine("--- Email Content ---");
+                                Console.WriteLine("--- Email Content Summary ---");
                                 Console.WriteLine($"Mail From: {mailFrom}");
                                 Console.WriteLine($"Recipients: {string.Join(", ", rcptTo)}");
-                                Console.WriteLine(emailData.ToString());
-                                Console.WriteLine("---------------------");
+                                Console.WriteLine("-----------------------------");
 
-                                // Here you would typically save the email or forward it to hMailServer
-                                // For example, you could create a new TcpClient to 127.0.0.2:25
-                                // and send this emailData to hMailServer.
+                                // --- NEW: Save the received email to a file ---
+                                string fileName = $"{DateTime.UtcNow:yyyyMMddHHmmssfff}_{Guid.NewGuid().ToString().Substring(0, 8)}.eml";
+                                string filePath = Path.Combine(EmailSaveDirectory, fileName);
+
+                                try
+                                {
+                                    File.WriteAllText(filePath, emailData.ToString());
+                                    Console.WriteLine($"Email saved to: {filePath}");
+                                    SendResponse(writer, "250 OK: Message accepted for delivery and saved");
+                                }
+                                catch (Exception fileEx)
+                                {
+                                    Console.WriteLine($"ERROR: Could not save email to file {filePath}: {fileEx.Message}");
+                                    SendResponse(writer, "451 Requested action aborted: local error in processing");
+                                }
+                                // --- END NEW ---
 
                                 // Reset state for next email from same client
                                 emailData.Clear();
                                 mailFrom = string.Empty;
                                 rcptTo.Clear();
                                 currentState = SmtpState.HeloReceived; // Back to a state where new MAIL FROM is expected
-                                SendResponse(writer, "250 OK: Message accepted for delivery");
                             }
                             else
                             {
-                                emailData.AppendLine(request);
+                                // Append the received line to emailData, re-adding CRLF for proper .eml format
+                                emailData.Append(requestLine + "\r\n");
                             }
                         }
                         else
@@ -168,8 +190,8 @@ namespace YukiDNS.MAIL_CORE
                 finally
                 {
                     // Ensure all resources are closed
-                    if (writer != null) writer.Dispose(); // Dispose StreamWriter
-                    if (reader != null) reader.Dispose(); // Dispose StreamReader
+                    if (writer != null) writer.Dispose();
+                    if (reader != null) reader.Dispose();
                     if (stream != null) stream.Close();
                     if (client != null) client.Close();
                     Console.WriteLine("Client connection closed.");
@@ -181,7 +203,6 @@ namespace YukiDNS.MAIL_CORE
         private static void SendResponse(StreamWriter writer, string response)
         {
             writer.WriteLine(response);
-            // AutoFlush is set to true in StreamWriter initialization, so no explicit Flush() needed here.
             Console.WriteLine($"Sent: {response}");
         }
     }
