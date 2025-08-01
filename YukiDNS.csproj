@@ -55,6 +55,7 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\.well-known\acme-challenge\" />
+    <Folder Include="maildb\" />
   </ItemGroup>
 
 </Project>

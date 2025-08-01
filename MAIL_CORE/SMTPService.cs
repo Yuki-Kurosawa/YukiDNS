@@ -6,6 +6,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using YukiDNS.COMMON_CORE.Constants;
+using System.Text.RegularExpressions;
 
 namespace YukiDNS.MAIL_CORE
 {
@@ -20,6 +22,13 @@ namespace YukiDNS.MAIL_CORE
             if (!Directory.Exists(EmailSaveDirectory))
             {
                 Directory.CreateDirectory(EmailSaveDirectory);
+            }
+
+            // Ensure queue directory
+            string queue = Path.Combine(EmailSaveDirectory, "queue");
+            if (!Directory.Exists(queue))
+            {
+                Directory.CreateDirectory(queue);
             }
 
             Thread smtp = new Thread(SMTP_THREAD_TCP);
@@ -85,13 +94,38 @@ namespace YukiDNS.MAIL_CORE
 
                                 // --- NEW: Save the received email to a file ---
                                 string fileName = $"{DateTime.UtcNow:yyyyMMddHHmmssfff}_{Guid.NewGuid().ToString().Substring(0, 8)}.eml";
-                                string filePath = Path.Combine(EmailSaveDirectory, fileName);
+                                string filePath = null;
+
+                                int retCode = 0;
 
                                 try
                                 {
-                                    File.WriteAllText(filePath, emailData.ToString());
-                                    Console.WriteLine($"Email saved to: {filePath}");
-                                    SendResponse(writer, "250 OK: Message accepted for delivery and saved");
+
+                                    retCode = WriteToQueue(fileName, emailData.ToString(), out filePath);
+
+                                    if (retCode == 0)
+                                    {
+                                        retCode = SendToMailBoxes(fileName, filePath, rcptTo);
+                                    }
+
+                                    switch(retCode)
+                                    {
+                                        case 0:
+                                            File.Delete(filePath);// remove queue data when success
+                                            SendResponse(writer, "250 OK: Message accepted for delivery and saved");
+                                            break;
+                                        case 1:
+                                            SendResponse(writer, "451 Requested action aborted: Internal Server Error");
+                                            break;
+                                        case 2:
+                                            SendResponse(writer, "550 Not Enough Space: Message wasn't sent because the recipient mailbox doesn't have enough storage or mail too large");
+                                            break;
+                                        case 3:
+                                        case 4:
+                                            SendResponse(writer, "550 Requested action not taken: mailbox unavailable");
+                                            break;
+                                    }
+                                    
                                 }
                                 catch (Exception fileEx)
                                 {
@@ -122,7 +156,7 @@ namespace YukiDNS.MAIL_CORE
                             {
                                 SendResponse(writer, "250-localhost.ksyuki.com Hello");
                                 SendResponse(writer, "250-PIPELINING");
-                                SendResponse(writer, "250-SIZE 10240000"); // Example max size
+                                SendResponse(writer, "250-SIZE " + (50 * B.Mi).ToString()); // Example max size
                                 SendResponse(writer, "250-VRFY");
                                 SendResponse(writer, "250-ETRN");
                                 SendResponse(writer, "250-AUTH PLAIN LOGIN"); // Example auth methods
@@ -206,6 +240,84 @@ namespace YukiDNS.MAIL_CORE
         {
             writer.WriteLine(response);
             Console.WriteLine($"Sent: {response}");
+        }
+
+        public static int WriteToQueue(string fileName, string mailData, out string filePath)
+        {
+            string queuePath = Path.Combine(EmailSaveDirectory, "queue", fileName);
+            filePath = null;
+
+            if (mailData.Length > 50 * B.Mi)
+            {
+                return 2;
+            }
+
+            try
+            {
+                File.WriteAllText(queuePath, mailData, Encoding.UTF8);
+                filePath = queuePath;
+                return 0;
+            }
+            catch
+            {
+                return 1;
+            }
+        }
+
+        public static int SendToMailBoxes(string fileName, string queuePath, List<string> receivers)
+        {
+            Dictionary<string, string> addrMaps = new Dictionary<string, string>();
+
+            foreach(string rec in receivers)
+            {
+                string addr = rec.Replace("<", "").Replace(">", ""); // remove the <> from RCPT TO: <addr>
+                string mailDir = MailBoxesToDirName(addr);
+
+                if(string.IsNullOrEmpty(mailDir))
+                {
+                    return 3;
+                }
+
+                if(!Directory.Exists(Path.Combine(EmailSaveDirectory,mailDir)))
+                {
+                    return 4;
+                }
+
+                addrMaps.Add(addr, mailDir);
+            }
+
+            foreach(var map in addrMaps.Keys)
+            {
+                try
+                {
+                    string filePath = Path.Combine(EmailSaveDirectory, addrMaps[map], fileName);
+                    File.Copy(queuePath, filePath);
+                }
+                catch
+                {
+                    return 1;
+                }
+            }
+
+            return 0;
+        }
+
+        public static string MailBoxesToDirName(string address)
+        {
+            string[] parts = address.Split('@',StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length < 2)
+            {
+                return null;// Invalid address format
+            }
+
+            string domain = parts[1];
+            string user = parts[0];
+
+            user = new Regex("[+].*$").Replace(user, ""); // remove things after + from username.
+            user = user.Replace(".", ""); //remove any dots from username;
+
+            return $@"{user}_{domain}";
         }
     }
 }
