@@ -316,6 +316,7 @@ namespace YukiDNS.MAIL_CORE
 
             user = new Regex("[+].*$").Replace(user, ""); // remove things after + from username.
             user = user.Replace(".", ""); //remove any dots from username;
+            user = user.ToLower(); // lowercase all
 
             return $@"{user}_{domain}";
         }
