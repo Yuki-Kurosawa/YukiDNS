@@ -40,8 +40,8 @@ namespace YukiDNS
             //Start Services
             //DNSService.Start();
             //WHOISService.Start();
-            SMTPService.Start();
-            //StartWebServer(args);
+            //SMTPService.Start();
+            StartWebServer(args);
 
 
             //ConsoleLogHelper.WriteInfoLine("All Service Started");

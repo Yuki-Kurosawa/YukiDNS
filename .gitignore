@@ -379,3 +379,6 @@ dsset-*
 .well-known
 *.flat
 *log*.*
+maildb/
+whoisdb/
+zones/

@@ -12,7 +12,7 @@ namespace YukiDNS.MAIL_CORE
     public class SMTPService
     {
         // Define the directory where received emails will be saved
-        private static readonly string EmailSaveDirectory = "ReceivedEmails";
+        private static readonly string EmailSaveDirectory = "maildb";
 
         public static void Start()
         {
