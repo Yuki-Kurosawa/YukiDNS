@@ -69,7 +69,7 @@ $@"<meta charset=""utf-8"" />
         {
             string path = file.FullName;
             MimeMessage msg = MimeMessage.Load(path);
-            return $@"{msg.Subject}</a>&nbsp;{msg.Date.DateTime:yyyy-mm-dd HH:mm:ss}";
+            return $@"{msg.Subject}</a>&nbsp;{msg.Date.DateTime:yyyy-MM-dd HH:mm:ss}";
         }
 
         [HttpGet("{mailbox}/{eml}")]
