@@ -22,7 +22,7 @@ namespace YukiDNS.MAIL_CORE
     public class POP3Service
     {
         // 邮件根目录，根据日志信息设置
-        private const string MailboxRootPath = @"E:\Repo\YukiDNS\maildb";
+        private const string MailboxRootPath = @"maildb";
 
         public static void Start()
         {
