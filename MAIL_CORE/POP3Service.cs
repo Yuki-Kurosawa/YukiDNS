@@ -78,8 +78,8 @@ namespace YukiDNS.MAIL_CORE
             try
             {
                 NetworkStream stream = client.GetStream();
-                reader = new StreamReader(stream, Encoding.ASCII);
-                writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
+                reader = new StreamReader(stream, Encoding.UTF8);
+                writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
 
                 writer.WriteLine("+OK POP3 server ready");
                 Console.WriteLine("Sent: +OK POP3 server ready");
@@ -200,7 +200,7 @@ namespace YukiDNS.MAIL_CORE
             {
                 case "STAT":
                     int emailCount = mailbox.Count(m => !deletedMessages[mailbox.IndexOf(m)]);
-                    long totalSize = mailbox.Where(m => !deletedMessages[mailbox.IndexOf(m)]).Sum(e => Encoding.ASCII.GetBytes(e).Length);
+                    long totalSize = mailbox.Where(m => !deletedMessages[mailbox.IndexOf(m)]).Sum(e => Encoding.UTF8.GetBytes(e).Length);
                     writer.WriteLine($"+OK {emailCount} {totalSize}");
                     break;
                 case "LIST":
@@ -209,7 +209,7 @@ namespace YukiDNS.MAIL_CORE
                     {
                         if (!deletedMessages[i])
                         {
-                            long size = Encoding.ASCII.GetBytes(mailbox[i]).Length;
+                            long size = Encoding.UTF8.GetBytes(mailbox[i]).Length;
                             writer.WriteLine($"{i + 1} {size}");
                         }
                     }
@@ -221,7 +221,7 @@ namespace YukiDNS.MAIL_CORE
                         if (int.TryParse(parts[1], out int messageNumber) && messageNumber > 0 && messageNumber <= mailbox.Count && !deletedMessages[messageNumber - 1])
                         {
                             string emailContent = mailbox[messageNumber - 1];
-                            long size = Encoding.ASCII.GetBytes(emailContent).Length;
+                            long size = Encoding.UTF8.GetBytes(emailContent).Length;
                             writer.WriteLine($"+OK {size} octets");
                             writer.WriteLine(emailContent);
                             writer.WriteLine(".");
@@ -320,7 +320,7 @@ namespace YukiDNS.MAIL_CORE
                 {
                     try
                     {
-                        string content = File.ReadAllText(filePath);
+                        string content = File.ReadAllText(filePath,Encoding.UTF8);
                         mailbox.Add(content);
                         // 使用文件名（不含扩展名）作为UIDL
                         uidlList.Add(Path.GetFileNameWithoutExtension(filePath));
