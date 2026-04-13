@@ -44,6 +44,8 @@ namespace YukiDNS.HTTP_CORE
 
             app.UseRouting();
 
+            app.UseCors("DefaultCorsPolicy");
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
@@ -63,7 +65,7 @@ namespace YukiDNS.HTTP_CORE
             corsBuilder.AllowAnyHeader();
             corsBuilder.AllowAnyMethod();
             corsBuilder.AllowAnyOrigin();
-            corsBuilder.AllowCredentials();
+            //corsBuilder.AllowCredentials();
 
             services.AddCors(options =>
             {

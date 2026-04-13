@@ -39,9 +39,9 @@ namespace YukiDNS
 
             //Start Services
             //DNSService.Start();
-            //WHOISService.Start();
-            SMTPService.Start();
-            POP3Service.Start();
+            WHOISService.Start();
+            //SMTPService.Start();
+            //POP3Service.Start();
             StartWebServer(args);
 
 
