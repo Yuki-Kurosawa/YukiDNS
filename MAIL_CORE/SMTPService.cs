@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO; // Required for StreamReader, StreamWriter, and File operations
 using System.Linq;
@@ -55,7 +55,7 @@ namespace YukiDNS.MAIL_CORE
                 {
                     client = tcp.AcceptTcpClientAsync().Result;
                     stream = client.GetStream();
-                    reader = new StreamReader(stream, Encoding.ASCII);
+                    reader = new StreamReader(stream, Encoding.UTF8);
                     writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
 
                     Console.WriteLine($"Client connected from {((IPEndPoint)client.Client.RemoteEndPoint).Address}");
@@ -84,7 +84,7 @@ namespace YukiDNS.MAIL_CORE
                         if (currentState == SmtpState.DataMode)
                         {
                             // In DATA mode, collect all lines until a line with "."
-                            if (request == ".")
+                            if (requestLine == ".")
                             {
                                 Console.WriteLine("End of DATA received.");
                                 Console.WriteLine("--- Email Content Summary ---");
@@ -142,6 +142,11 @@ namespace YukiDNS.MAIL_CORE
                             }
                             else
                             {
+                                // Remove SMTP dot-stuffing (RFC 5321 4.5.2): client escapes lines starting with '.' as '..', server drops one dot
+                                if (requestLine.StartsWith("."))
+                                {
+                                    requestLine = requestLine.Substring(1);
+                                }
                                 // Append the received line to emailData, re-adding CRLF for proper .eml format
                                 emailData.Append(requestLine + "\r\n");
                             }
@@ -254,7 +259,7 @@ namespace YukiDNS.MAIL_CORE
 
             try
             {
-                File.WriteAllText(queuePath, mailData, Encoding.UTF8);
+                File.WriteAllText(queuePath, mailData, new UTF8Encoding(false)); // no BOM
                 filePath = queuePath;
                 return 0;
             }
