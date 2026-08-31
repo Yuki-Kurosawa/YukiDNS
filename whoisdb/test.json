@@ -2,7 +2,7 @@
   // BASIC INFO
   "DomainName": "test.yuki",
   "RegistryDomainID": "DN195465-YUKI",
-  "RegistryWHOISServer": "whois.nic.yuki",
+  "RegistrarWHOISServer": "whois.nic.yuki",
   "RegistrarURL": "https://domains.yuki/",
   "UpdatedDate": "2025-01-01T00:00:00Z",
   "CreationDate": "2025-01-01T00:00:00Z",
