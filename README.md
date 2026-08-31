@@ -1,6 +1,6 @@
 # YukiDNS
 ----------
-A Tiny DNS Server made with .Net 8.0
+A Tiny DNS Server made with .Net 10.0
 
 
 # Features
