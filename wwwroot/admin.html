@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YukiDNS CA 管理台</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c232d; --border:#2a323c;
+    --text:#e6e9ed; --muted:#8b95a1; --faint:#5c6672;
+    --accent:#2fbf9f; --accent-dim:#1f8a73; --red:#e5534b; --amber:#d9a24a;
+    --mono:"Cascadia Code","JetBrains Mono",Consolas,monospace;
+    --sans:"Segoe UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px}
+  body{min-width:1100px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* ===== 布局 ===== */
+  .app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+  .sidebar{background:var(--panel);border-right:1px solid var(--border);padding:18px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow:auto}
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px;border-bottom:1px solid var(--border);margin-bottom:12px}
+  .brand svg{flex:0 0 auto}
+  .brand .bt{font-weight:700;letter-spacing:.5px;font-size:15px}
+  .brand .bs{color:var(--muted);font-size:11px;font-family:var(--mono)}
+  .nav{display:flex;flex-direction:column;gap:2px}
+  .nav a{padding:9px 10px;border-radius:6px;color:var(--muted);display:flex;align-items:center;gap:10px;font-weight:500}
+  .nav a:hover{background:var(--panel2);color:var(--text);text-decoration:none}
+  .nav a.active{background:var(--panel2);color:var(--accent)}
+  .nav a svg{flex:0 0 auto;opacity:.9}
+  .side-stat{margin-top:auto;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:12px}
+  .side-stat b{color:var(--text);font-family:var(--mono)}
+
+  main{padding:22px 28px 60px}
+  .page-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;gap:16px}
+  .page-head h1{font-size:20px;margin:0;font-weight:700}
+  .page-head .sub{color:var(--muted);font-size:12px;font-family:var(--mono)}
+
+  /* ===== 卡片 ===== */
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:16px}
+  .card h3{margin:0 0 12px;font-size:14px;color:var(--text);font-weight:600;display:flex;align-items:center;gap:8px}
+  .grid{display:grid;gap:12px}
+  .grid.cols-4{grid-template-columns:repeat(4,1fr)}
+  .grid.cols-2{grid-template-columns:1fr 1fr}
+
+  .stat{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+  .stat .k{color:var(--muted);font-size:12px;margin-bottom:4px}
+  .stat .v{font-size:22px;font-weight:700;font-family:var(--mono)}
+  .stat .v.accent{color:var(--accent)} .stat .v.red{color:var(--red)} .stat .v.amber{color:var(--amber)}
+
+  /* ===== 徽标 ===== */
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+  .pill.root{color:var(--accent);border-color:var(--accent-dim);background:rgba(47,191,159,.08)}
+  .pill.ca{color:var(--amber);border-color:#7a5b20;background:rgba(217,162,74,.08)}
+  .pill.leaf{color:var(--text);border-color:var(--border)}
+  .pill.rsa{color:#6fb3f2;border-color:#2a4a6b;background:rgba(111,179,242,.08)}
+  .pill.ec{color:#c99af0;border-color:#5a3a75;background:rgba(201,154,240,.08)}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:0 0 auto}
+  .dot.valid{background:var(--accent)} .dot.revoked{background:var(--red)}
+
+  /* ===== 证书树 ===== */
+  .tree{margin-top:4px}
+  .tnode{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:9px 10px;border:1px solid var(--border);border-radius:8px;background:var(--panel2);margin-bottom:6px;transition:border-color .15s}
+  .tnode:hover{border-color:var(--accent-dim)}
+  .tnode .twist{display:flex;align-items:center;justify-content:center;color:var(--faint);cursor:pointer}
+  .tnode .twist svg{transition:transform .15s}
+  .tnode.collapsed .twist svg{transform:rotate(-90deg)}
+  .tmain{min-width:0}
+  .trow1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .trow1 .subj{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:520px}
+  .trow2{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:11px;margin-top:3px;flex-wrap:wrap}
+  .serial{font-family:var(--mono);color:var(--faint);font-size:11px}
+  .tval{display:flex;align-items:center;gap:10px;justify-content:flex-end}
+  .kids{margin-left:34px;border-left:1px dashed var(--border);padding-left:12px;margin-top:6px}
+  .valbar{width:120px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+  .valbar i{display:block;height:100%;background:var(--accent)}
+  .valbar i.warn{background:var(--amber)} .valbar i.expired{background:var(--red)}
+  .ops{display:flex;gap:6px}
+  .ops button,.btn{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:12px;cursor:pointer;font-family:var(--sans)}
+  .ops button:hover,.btn:hover{color:var(--text);border-color:var(--accent-dim)}
+  .btn.primary{background:var(--accent-dim);border-color:var(--accent-dim);color:#07130f;font-weight:600}
+  .btn.primary:hover{background:var(--accent)}
+  .btn.danger{border-color:#5c2623;color:var(--red)}
+  .btn.danger:hover{background:rgba(229,83,75,.1);color:var(--red)}
+  .btn.small{padding:2px 7px;font-size:11px}
+
+  /* ===== 表单 ===== */
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500}
+  input[type=text],input[type=number],textarea,select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px 10px;font-family:var(--sans);font-size:13px}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent-dim)}
+  textarea{font-family:var(--mono);font-size:12px;resize:vertical}
+  .field{margin-bottom:12px}
+  .checks{display:flex;flex-wrap:wrap;gap:8px}
+  .checks label{display:inline-flex;align-items:center;gap:6px;margin:0;padding:4px 9px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:var(--bg)}
+  .checks input{margin:0}
+  .checks label.on{border-color:var(--accent-dim);color:var(--accent)}
+  .quick{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
+
+  /* ===== 表格 ===== */
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:6px 8px;border-bottom:1px solid var(--border);font-weight:600}
+  td{padding:9px 8px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+
+  /* ===== 模态 ===== */
+  .mask{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-start;justify-content:center;padding:48px 20px;z-index:50}
+  .mask.show{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--border);border-radius:12px;width:640px;max-width:100%;max-height:86vh;overflow:auto;padding:20px 22px}
+  .modal h2{margin:0 0 14px;font-size:16px}
+  .modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+
+  /* ===== 链 / 详情 ===== */
+  .chainrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--panel2);margin-bottom:6px}
+  .chainrow .idx{font-family:var(--mono);color:var(--faint);font-size:11px;flex:0 0 auto}
+  .chainrow .ci{flex:1;min-width:0}
+  .kv{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;font-size:13px}
+  .kv dt{color:var(--muted)}
+  .kv dd{margin:0;font-family:var(--mono);font-size:12px;word-break:break-all}
+  .empty{color:var(--muted);text-align:center;padding:36px 0;font-size:13px}
+
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:14px}
+  .tabs button{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);padding:8px 14px;font-size:13px;cursor:pointer;font-family:var(--sans)}
+  .tabs button.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .tabpane{display:none} .tabpane.active{display:block}
+
+  #toast{position:fixed;bottom:22px;right:22px;z-index:100;display:flex;flex-direction:column;gap:8px}
+  .toast{background:var(--panel2);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:10px 16px;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.4);animation:tin .2s ease}
+  .toast.err{border-left-color:var(--red)}
+  @keyframes tin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .mono{font-family:var(--mono)}
+  .dim{color:var(--muted)}
+  .sans{font-family:var(--sans)}
+  .linkbtn{background:none;border:none;color:var(--accent);cursor:pointer;font-size:12px;padding:0;font-family:var(--sans)}
+  .linkbtn:hover{text-decoration:underline}
+  .right{justify-content:flex-end}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6"><circle cx="12" cy="9" r="5.2"/><path d="M8.5 13.5 7 21l5-2.6L17 21l-1.5-7.5"/></svg>
+      <div>
+        <div class="bt">YukiDNS CA</div>
+        <div class="bs">管理台 / ADMIN</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <a href="#overview" data-route-link="overview"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h18v12H3z"/><path d="M8 20h8M12 16v4"/></svg>概览与证书树</a>
+      <a href="#issue" data-route-link="issue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M3 12h18"/></svg>签发证书</a>
+      <a href="#library" data-route-link="library"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>证书库</a>
+      <a href="#ca" data-route-link="ca"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/><path d="M3 8h14"/></svg>管理 CA</a>
+      <a href="#policies" data-route-link="policies"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>签发策略</a>
+      <a href="#oidnames" data-route-link="oidnames"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4h6v6H9zM4 14h6v6H4zM15 15h5v5h-5z"/><path d="M13 10l3 3M10 14l2 2M7 4l-2 6"/></svg>扩展 OID</a>
+    </nav>
+    <div class="side-stat">
+      <div>根 CA <b id="statRoots">-</b></div>
+      <div>中间 CA <b id="statCas">-</b></div>
+      <div>叶子证书 <b id="statLeaves">-</b></div>
+      <div>已吊销 <b id="statRevoked">-</b></div>
+    </div>
+  </aside>
+
+  <main id="view"></main>
+</div>
+
+<div class="mask" id="mask"></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ===== 状态 ===== */
+var state = { certs: [], policies: [], oidnames: [], oidMap: {}, loaded: false };
+
+/* ===== 基础工具 ===== */
+function $(s, r){ return (r||document).querySelector(s); }
+function el(tag, attrs, html){
+  var e=document.createElement(tag);
+  if(typeof attrs==='string'){
+    var re=/([a-zA-Z][a-zA-Z0-9-]*)(?:="([^"]*)")?/g, m;
+    while((m=re.exec(attrs))){ e.setAttribute(m[1], m[2]||''); }
+  } else if(attrs){
+    Object.keys(attrs).forEach(function(k){ e.setAttribute(k, attrs[k]); });
+  }
+  if(html!=null) e.innerHTML=html;
+  return e;
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function fmtDate(s){ if(!s) return '-'; var d=new Date(s); if(isNaN(d)) return s; var p=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+function shortSerial(s, n){ n=n||16; return s.length>n ? s.slice(0,n)+'…' : s; }
+function keyName(r){ return (r.keyType||'?')+(r.keyParams?(' '+r.keyParams):''); }
+/* Subject 可读化：把 CN=xxx,O=yyy 拆成字段，突出域名与组织（对齐证书服务后台体验） */
+function subjFields(c){ return (c.subjectFields||[]).filter(function(f){ return f && f.value; }); }
+function subjVal(c, oid){ var f=subjFields(c); for(var i=0;i<f.length;i++) if(f[i].oid===oid) return f[i].value; return ''; }
+function subjCN(c){ return subjVal(c,'2.5.4.3') || (c.subject||''); }
+function subjOrg(c){ return subjVal(c,'2.5.4.10'); }
+function subjCountry(c){ return subjVal(c,'2.5.4.6'); }
+var SUBJ_LABELS = {
+  commonName:'通用名(CN)', organizationName:'组织(O)', organizationalUnitName:'部门(OU)',
+  countryName:'国家(C)', localityName:'地区(L)', stateOrProvinceName:'省份(ST)',
+  emailAddress:'邮箱', serialNumber:'序列号', givenName:'名字', surname:'姓氏',
+  domainComponent:'域组件', streetAddress:'街道', title:'职位', businessCategory:'业务类别'
+};
+function subjLabel(f){ return SUBJ_LABELS[f.name] || f.name; }
+function issuerLabel(c){
+  if(!c.issuerSerial) return '（自签根）';
+  var iss = state.certs.filter(function(x){return x.serial===c.issuerSerial;})[0];
+  return iss ? (subjCN(iss)+' · '+shortSerial(iss.serial,12)) : c.issuerSerial;
+}
+function toast(msg, isErr){ var t=el('div','class="toast'+(isErr?' err':'')+'"',esc(msg)); $('#toast').appendChild(t); setTimeout(function(){t.remove();},3800); }
+function api(url, opts){
+  return fetch(url, Object.assign({headers:{'Content-Type':'application/json'},cache:'no-store'},opts||{}))
+    .then(function(resp){ return resp.text().then(function(txt){
+        var body; try{ body=txt?JSON.parse(txt):null; }catch(e){ body=txt; }
+        if(!resp.ok){ var m = (body && (body.message||body)) || ('HTTP '+resp.status); throw new Error(typeof m==='string'?m:JSON.stringify(m)); }
+        return body;
+      }); });
+}
+function getQuery(name){ var m=location.hash.match(new RegExp('[?&]'+name+'=([^&]*)')); return m?decodeURIComponent(m[1]):null; }
+
+/* ===== 数据加载 ===== */
+function buildOidMap(){
+  var m = {};
+  (state.oidnames||[]).forEach(function(r){ m[r.oid] = r.name; });
+  state.oidMap = m;
+}
+function oidName(oid){
+  if(!oid) return '';
+  var n = state.oidMap[oid.trim()];
+  return n || oid.trim();
+}
+function oidListReadable(oidList){
+  if(!oidList) return [];
+  return oidList.split(',').map(function(s){return s.trim();}).filter(Boolean).map(function(o){return {oid:o, name:oidName(o)};});
+}
+function load(){
+  return Promise.all([
+    api('/CA/list').catch(function(){return [];}),
+    api('/CA/policies').catch(function(){return [];}),
+    api('/CA/oidnames').catch(function(){return [];})
+  ]).then(function(r){
+    state.certs = r[0]||[]; state.policies = r[1]||[]; state.oidnames = r[2]||[];
+    buildOidMap();
+    state.loaded = true;
+    $('#statRoots').textContent = state.certs.filter(function(c){return c.kind==='root';}).length;
+    $('#statCas').textContent = state.certs.filter(function(c){return c.isCA && c.kind!=='root';}).length;
+    $('#statLeaves').textContent = state.certs.filter(function(c){return !c.isCA;}).length;
+    $('#statRevoked').textContent = state.certs.filter(function(c){return c.status==='revoked';}).length;
+    route();
+  });
+}
+
+/* ===== 路由 ===== */
+var routes = { overview:renderOverview, issue:renderIssue, library:renderLibrary, ca:renderCA, policies:renderPolicies, oidnames:renderOidNames, detail:renderDetail };
+function route(){
+  var h = location.hash || '#overview';
+  var name = h.replace(/^#/,'').split('?')[0] || 'overview';
+  document.querySelectorAll('.nav a').forEach(function(a){
+    a.classList.toggle('active', a.getAttribute('data-route-link')===name);
+  });
+  var fn = routes[name] || renderOverview;
+  fn();
+}
+window.addEventListener('hashchange', route);
+
+/* ===== 概览 / 证书树 ===== */
+function validityPct(c){
+  var nb=new Date(c.notBefore).getTime(), na=new Date(c.notAfter).getTime(), now=Date.now();
+  if(!isFinite(nb)||!isFinite(na)) return {cls:'',pct:100};
+  var pct=Math.max(0,Math.min(100,(now-nb)/(na-nb)*100));
+  var cls = now>na ? 'expired' : (pct>85?'warn':'');
+  return {cls:cls,pct:100-pct};
+}
+function treeRow(c, depth){
+  var kids = state.certs.filter(function(x){ return x.issuerSerial===c.serial; });
+  var vp = validityPct(c);
+  var wrap = el('div');
+  var row = el('div','class="tnode'+(kids.length&&c.isCA?'':' collapsed')+'"');
+  var twist = el('div','class="twist"','<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>');
+  if(!kids.length) twist.style.visibility='hidden';
+  twist.addEventListener('click',function(){ row.classList.toggle('collapsed'); });
+  var keyType = c.isCA
+    ? '<span class="pill '+(c.keyType==='EC'?'ec':'rsa')+'">'+esc(keyName(c))+'</span>'
+    : '';
+  var orgTag = subjOrg(c) ? '<span class="dim" style="font-size:11px;margin-left:2px">'+esc(subjOrg(c))+'</span>' : '';
+  var main = el('div','class="tmain"');
+  main.innerHTML =
+    '<div class="trow1">'+
+      '<span class="dot '+(c.status==='revoked'?'revoked':'valid')+'"></span>'+
+      '<span class="pill '+c.kind+'">'+c.kind.toUpperCase()+'</span>'+
+      keyType+
+      (c.status==='revoked'?'<span class="pill" style="border-color:#5c2623;color:var(--red)">REVOKED</span>':'')+
+      '<span class="subj" title="'+esc(c.subject)+'">'+esc(subjCN(c))+'</span>'+orgTag+
+    '</div>'+
+    '<div class="trow2">'+
+      '<span class="serial">'+esc(shortSerial(c.serial,18))+'</span>'+
+      (c.san?'<span>SAN: '+esc(c.san)+'</span>':'')+
+      '<span>'+fmtDate(c.notBefore)+' → '+fmtDate(c.notAfter)+'</span>'+
+      (c.policyId?('<span>策略 #'+c.policyId+'</span>'):'')+
+    '</div>';
+  var val = el('div','class="tval"');
+  var bar = el('div','class="valbar"','<i style="width:'+vp.pct.toFixed(0)+'%"'+(vp.cls?' class="'+vp.cls+'"':'')+'></i>');
+  bar.title = '有效期剩余 '+vp.pct.toFixed(0)+'%';
+  var ops = el('div','class="ops"');
+  var d = el('button','', '详情');
+  d.addEventListener('click',function(){ location.hash='#detail?serial='+c.serial; });
+  ops.appendChild(d);
+  val.appendChild(bar); val.appendChild(ops);
+  row.appendChild(twist); row.appendChild(main); row.appendChild(val);
+  wrap.appendChild(row);
+  if(kids.length){
+    var box = el('div','class="kids"');
+    kids.forEach(function(k){ box.appendChild(treeRow(k, depth+1)); });
+    wrap.appendChild(box);
+  }
+  return wrap;
+}
+function renderOverview(){
+  var roots = state.certs.filter(function(c){return c.kind==='root';});
+  var v = el('div');
+  var stats = el('div','class="grid cols-4"');
+  var s = function(k,val,cls){ var c=el('div','class="stat"','<div class="k">'+k+'</div><div class="v '+(cls||'')+'">'+val+'</div>'); return c; };
+  stats.appendChild(s('根 CA', state.certs.filter(function(c){return c.kind==='root';}).length, 'accent'));
+  stats.appendChild(s('中间 CA', state.certs.filter(function(c){return c.isCA&&c.kind!=='root';}).length, 'amber'));
+  stats.appendChild(s('叶子证书', state.certs.filter(function(c){return !c.isCA;}).length));
+  stats.appendChild(s('已吊销', state.certs.filter(function(c){return c.status==='revoked';}).length, 'red'));
+  v.appendChild(stats);
+
+  // 快捷操作（EPKI 风格首页操作区）
+  var qk = el('div','class="card"');
+  qk.appendChild(el('h3','','快捷操作'));
+  var qrow = el('div','style="display:flex;gap:8px;flex-wrap:wrap"');
+  var qbtn = function(label, href){ var b=el('a','href="'+href+'" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--border);border-radius:6px;background:var(--panel2);color:var(--text);font-size:13px;font-weight:500"',label); return b; };
+  qrow.appendChild(qbtn('签发 SSL/TLS 证书','#issue'));
+  qrow.appendChild(qbtn('CSR 模式签发（私钥自持）','#issue'));
+  qrow.appendChild(qbtn('新建根 / 中间 CA','#ca'));
+  qrow.appendChild(qbtn('新建签发策略','#policies'));
+  qrow.appendChild(qbtn('管理扩展 OID','#oidnames'));
+  qrow.appendChild(qbtn('浏览全部证书','#library'));
+  qk.appendChild(qrow);
+  v.appendChild(qk);
+
+  var card = el('div','class="card"');
+  card.appendChild(el('h3','','证书信任树（按签发关系展开，'.concat(roots.length,' 棵根）')));
+  if(!roots.length){
+    card.appendChild(el('div','class="empty"','尚无任何证书。先在「管理 CA」中创建根 CA，或在「签发证书」中签发第一张证书。'));
+  } else {
+    var tree = el('div','class="tree"');
+    roots.forEach(function(r){ tree.appendChild(treeRow(r,0)); });
+    card.appendChild(tree);
+  }
+  v.appendChild(card);
+  $('#view').innerHTML=''; $('#view').appendChild(v);
+}
+
+/* ===== 证书库（EPKI Report on Your Orders 风格） ===== */
+function renderLibrary(){
+  var v = el('div');
+  var head = el('div','class="page-head"');
+  head.appendChild(el('h1','','证书库'));
+  head.appendChild(el('div','class="sub"','全部证书 · 可按类型 / 状态 / 关键词检索，点击行进入详情'));
+  v.appendChild(head);
+
+  var card = el('div','class="card"');
+  var bar = el('div','style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"');
+  var kw = el('input','type="text" id="libKw" placeholder="搜索 Subject / 序列号 / SAN…" style="flex:1;min-width:200px"');
+  bar.appendChild(kw);
+  var selType = el('select','id="libType" style="width:140px"');
+  ['全部类型','root','ca','leaf'].forEach(function(t){ selType.appendChild(el('option','value="'+(t==='全部类型'?'':t)+'"', t==='全部类型'?'全部类型':t.toUpperCase())); });
+  bar.appendChild(selType);
+  var selSt = el('select','id="libStatus" style="width:120px"');
+  ['全部状态','valid','revoked'].forEach(function(s){ selSt.appendChild(el('option','value="'+(s==='全部状态'?'':s)+'"', s==='全部状态'?'全部状态':s)); });
+  bar.appendChild(selSt);
+  var count = el('div','style="display:flex;align-items:center;color:var(--muted);font-size:12px"');
+  card.appendChild(bar);
+
+  var t = el('table');
+  var tr = el('tr','', '<th>类型</th><th>状态</th><th>Subject</th><th>序列号</th><th>密钥</th><th>有效期至</th><th></th>');
+  var thead=el('thead'); thead.appendChild(tr); t.appendChild(thead);
+  var tb=el('tbody'); t.appendChild(tb);
+  card.appendChild(t);
+  v.appendChild(card);
+
+  function renderRows(){
+    var q = ($('#libKw').value||'').trim().toLowerCase();
+    var ty = $('#libType').value, st = $('#libStatus').value;
+    var list = state.certs.filter(function(c){
+      if(ty && c.kind!==ty) return false;
+      if(st && c.status!==st) return false;
+      if(q && (c.subject||'').toLowerCase().indexOf(q)<0 && (c.serial||'').toLowerCase().indexOf(q)<0 && (c.san||'').toLowerCase().indexOf(q)<0) return false;
+      return true;
+    });
+    count.textContent = list.length + ' 条';
+    tb.innerHTML='';
+    if(!list.length){ tb.appendChild(el('tr','','<td colspan="7" class="empty" style="padding:24px 0">无匹配证书</td>')); return; }
+    list.forEach(function(c){
+      var row=el('tr','style="cursor:pointer"');
+      row.addEventListener('click',function(){ location.hash='#detail?serial='+c.serial; });
+      row.appendChild(el('td','','<span class="pill '+c.kind+'">'+c.kind.toUpperCase()+'</span>'+(c.isCA&&c.kind!=='root'?' <span class="pill ca">CA</span>':'')));
+      row.appendChild(el('td','','<span class="dot '+(c.status==='revoked'?'revoked':'valid')+'" style="margin-right:5px"></span>'+c.status.toUpperCase()));
+      row.appendChild(el('td','','<b>'+esc(subjCN(c))+'</b>'+(subjOrg(c)?(' <span class="dim" style="font-size:11px">'+esc(subjOrg(c))+'</span>'):'')+(c.san?'<div class="mono dim" style="font-size:11px">'+esc(c.san)+'</div>':'')));
+      row.appendChild(el('td','class="mono" style="font-size:11px"',esc(shortSerial(c.serial,18))));
+      row.appendChild(el('td','',esc(keyName(c))));
+      row.appendChild(el('td','class="mono" style="font-size:12px"',fmtDate(c.notAfter)));
+      row.appendChild(el('td','','<a href="#detail?serial='+esc(c.serial)+'">详情</a>'));
+      tb.appendChild(row);
+    });
+  }
+  kw.addEventListener('input', renderRows);
+  selType.addEventListener('change', renderRows);
+  selSt.addEventListener('change', renderRows);
+  bar.appendChild(count);
+  $('#view').innerHTML=''; $('#view').appendChild(v);
+  renderRows();
+}
+
+/* ===== 扩展 OID（OID → 可读名注册表） ===== */
+function openOidModal(rec){
+  var mask=$('#mask'); mask.innerHTML=''; mask.classList.add('show');
+  var m = el('div','class="modal"');
+  m.appendChild(el('h2','', rec?('编辑 OID：'+esc(rec.oid)):'注册新 OID'));
+  var f = el('form');
+  f.appendChild(el('div','class="field"','<label>OID（如 1.3.6.1.5.5.7.3.1）</label><input type="text" id="oidOid" value="'+esc(rec?rec.oid:'')+'"'+(rec?' readonly':'')+' placeholder="1.2.840.113549.1.9.20.1">'));
+  f.appendChild(el('div','class="field"','<label>可读名称（如 myPurpose / 企业自定义用途）</label><input type="text" id="oidName" value="'+esc(rec?rec.name:'')+'">'));
+  f.appendChild(el('div','class="field"','<label>描述（可选）</label><input type="text" id="oidDesc" value="'+esc(rec?(rec.description||''):'')+'" placeholder="用于什么场景">'));
+  if(rec && rec.builtIn){
+    f.appendChild(el('div','class="dim" style="font-size:12px;margin-bottom:10px"','内置 OID：保存将覆盖内置名称；删除将回退到内置默认。'));
+  }
+  var foot = el('div','class="modal-foot"');
+  var cancel = el('button','type="button"','取消'); cancel.addEventListener('click',function(){mask.classList.remove('show');});
+  var save = el('button','type="submit" class="btn primary"', rec?'保存':'注册');
+  foot.appendChild(cancel); foot.appendChild(save); f.appendChild(foot);
+  m.appendChild(f); mask.appendChild(m);
+  f.addEventListener('submit',function(e){
+    e.preventDefault();
+    var payload = { oid:$('#oidOid').value.trim(), name:$('#oidName').value.trim(), description:$('#oidDesc').value.trim()||null };
+    if(!payload.oid || !payload.name){ toast('OID 与名称必填',true); return; }
+    api('/CA/oidnames',{method:'POST',body:JSON.stringify(payload)})
+      .then(function(){ toast(rec?'OID 已更新':'OID 已注册'); mask.classList.remove('show'); load(); })
+      .catch(function(err){ toast(err.message,true); });
+  });
+}
+function renderOidNames(){
+  var v = el('div');
+  var head = el('div','class="page-head"');
+  head.appendChild(el('h1','','扩展 OID'));
+  var sub = el('div');
+  sub.appendChild(el('div','class="sub"','证书里的 OID 在后台转成可读名；自定义 OID 在此注册（也可覆盖内置名）。'));
+  head.appendChild(sub);
+  var nb = el('button','class="btn primary"','注册新 OID'); nb.addEventListener('click',function(){openOidModal(null);});
+  head.appendChild(nb);
+  v.appendChild(head);
+
+  var card = el('div','class="card"');
+  var t = el('table');
+  var tr = el('tr','', '<th>OID</th><th>可读名称</th><th>描述</th><th>来源</th><th>操作</th>');
+  var thead=el('thead'); thead.appendChild(tr); t.appendChild(thead);
+  var tb=el('tbody');
+  state.oidnames.forEach(function(r){
+    var row=el('tr');
+    row.appendChild(el('td','class="mono" style="font-size:12px"',esc(r.oid)));
+    row.appendChild(el('td','','<b>'+esc(r.name)+'</b>'));
+    row.appendChild(el('td','class="dim" style="font-size:12px"',esc(r.description||'-')));
+    row.appendChild(el('td','','<span class="pill '+(r.builtIn?'rsa':'ec')+'">'+(r.builtIn?'内置':'自定义')+'</span>'));
+    var op=el('td');
+    var eb=el('button','class="small"','编辑'); eb.addEventListener('click',function(){openOidModal(r);});
+    var db=el('button','class="small danger"','删除'); db.addEventListener('click',function(){
+      var msg = r.builtIn ? '该 OID 为内置项，删除将清除自定义覆盖、回退到内置名称。继续？' : '删除该自定义 OID 注册？';
+      if(!confirm(msg)) return;
+      api('/CA/oidnames/'+encodeURIComponent(r.oid),{method:'DELETE'}).then(function(res){
+        toast(res && res.revertedToBuiltIn ? '已回退到内置名称' : '已删除');
+        load();
+      }).catch(function(err){toast(err.message,true);});
+    });
+    op.appendChild(eb); op.appendChild(el('span','style="display:inline-block;width:6px"','')); op.appendChild(db);
+    row.appendChild(op);
+    tb.appendChild(row);
+  });
+  if(!state.oidnames.length) tb.appendChild(el('tr','','<td colspan="5" class="empty" style="padding:24px 0">暂无 OID 注册项</td>'));
+  t.appendChild(tb); card.appendChild(t); v.appendChild(card);
+  $('#view').innerHTML=''; $('#view').appendChild(v);
+}
+
+/* ===== 签发 ===== */
+function caOptions(sel, withAuto){
+  sel.innerHTML='';
+  var cas = state.certs.filter(function(c){return c.isCA;});
+  if(withAuto) sel.appendChild(el('option','value=""','（自动按密钥类型路由）'));
+  cas.forEach(function(c){
+    var o=el('option','value="'+esc(c.serial)+'"', esc(c.subject)+' · '+c.kind+' · '+keyName(c));
+    sel.appendChild(o);
+  });
+  if(!withAuto && cas.length) sel.selectedIndex=0;
+}
+function renderIssue(){
+  var v = el('div');
+  var head = el('div','class="page-head"');
+  head.appendChild(el('h1','','签发证书'));
+  head.appendChild(el('div','class="sub"','/CA/GenWebServerCert · /CA/SignCSR'));
+  v.appendChild(head);
+
+  var card = el('div','class="card"');
+  var tabs = el('div','class="tabs"');
+  var t1=el('button','','服务端密钥（CA 生成私钥）'); var t2=el('button','','CSR 模式（私钥自持）');
+  tabs.appendChild(t1); tabs.appendChild(t2); card.appendChild(tabs);
+
+  // --- Tab 1: 服务端密钥 ---
+  var p1 = el('div','class="tabpane"');
+  var f1 = el('form');
+  var gi = el('div','class="field"','<label>签发者（CA）</label>'); var si=el('select'); gi.appendChild(si); f1.appendChild(gi);
+  var gn = el('div','class="field"','<label>Subject（如 CN=www.example.com,O=MyOrg）</label><input type="text" id="issName" placeholder="CN=example.com,OU=ca.example.com,O=TestCert">'); f1.appendChild(gn);
+  var gs = el('div','class="field"','<label>SAN（逗号分隔，可留空）</label><input type="text" id="issSan" placeholder="example.com,www.example.com">'); f1.appendChild(gs);
+  var gb = el('div','class="field"','<button type="submit" class="btn primary">签发</button>'); f1.appendChild(gb);
+  var res1 = el('div','',''); f1.appendChild(res1);
+  f1.addEventListener('submit',function(e){
+    e.preventDefault();
+    api('/CA/GenWebServerCert',{method:'POST',body:JSON.stringify({
+      issuerSerial:si.value, name:$('#issName').value.trim()||null, dnsNames:$('#issSan').value.trim()||null
+    })}).then(function(r){
+      toast('已签发 '+r.serial);
+      res1.innerHTML = '<div class="mono dim" style="margin-top:8px">序列号 '+esc(r.serial)+' · 密钥类型 '+esc(r.keyType)+'<br><a target="_blank" href="/CA/certs/'+esc(r.serial)+'/chain">下载证书链</a> · <a target="_blank" href="/CA/certs/'+esc(r.serial)+'/crt">下载证书</a></div>';
+      load();
+    }).catch(function(err){ toast(err.message,true); });
+  });
+  p1.appendChild(f1);
+  caOptions(si,false);
+
+  // --- Tab 2: CSR 模式 ---
+  var p2 = el('div','class="tabpane"');
+  var f2 = el('form');
+  var gcsr = el('div','class="field"','<label>CSR（PKCS#10 PEM）</label><textarea id="csrPem" rows="7" placeholder="-----BEGIN CERTIFICATE REQUEST-----&#10;...&#10;-----END CERTIFICATE REQUEST-----"></textarea>'); f2.appendChild(gcsr);
+  var gci = el('div','class="field"','<label>签发者（可选，留空按 CSR 密钥类型自动路由）</label>'); var si2=el('select'); gci.appendChild(si2); f2.appendChild(gci);
+  var gcn = el('div','class="field"','<label>Subject 覆盖（可选，默认取 CSR）</label><input type="text" id="csrName" placeholder="留空使用 CSR 中的 Subject">'); f2.appendChild(gcn);
+  var gcs = el('div','class="field"','<label>SAN（可选，默认取 CSR 请求的 SAN）</label><input type="text" id="csrSan" placeholder="example.com,www.example.com">'); f2.appendChild(gcs);
+  var gb2 = el('div','class="field"','<button type="submit" class="btn primary">签发（CA 只签公钥，私钥由你自持）</button>'); f2.appendChild(gb2);
+  var res2 = el('div','',''); f2.appendChild(res2);
+  f2.addEventListener('submit',function(e){
+    e.preventDefault();
+    if(!$('#csrPem').value.trim()){ toast('请粘贴 CSR',true); return; }
+    api('/CA/SignCSR',{method:'POST',body:JSON.stringify({
+      csr:$('#csrPem').value, issuerSerial:si2.value||null, name:$('#csrName').value.trim()||null, dnsNames:$('#csrSan').value.trim()||null
+    })}).then(function(r){
+      toast('已签发 '+r.serial);
+      res2.innerHTML = '<div class="mono dim" style="margin-top:8px">序列号 '+esc(r.serial)+' · 密钥类型 '+esc(r.keyType)+'<br><a target="_blank" href="/CA/certs/'+esc(r.serial)+'/chain">下载证书链</a> · <a target="_blank" href="/CA/certs/'+esc(r.serial)+'/crt">下载证书</a></div>';
+      load();
+    }).catch(function(err){ toast(err.message,true); });
+  });
+  p2.appendChild(f2);
+  caOptions(si2,true);
+
+  t1.addEventListener('click',function(){t1.classList.add('active');t2.classList.remove('active');p1.classList.add('active');p2.classList.remove('active');});
+  t2.addEventListener('click',function(){t2.classList.add('active');t1.classList.remove('active');p2.classList.add('active');p1.classList.remove('active');});
+  t1.classList.add('active'); p1.classList.add('active');
+  card.appendChild(p1); card.appendChild(p2);
+  v.appendChild(card);
+  $('#view').innerHTML=''; $('#view').appendChild(v);
+}
+
+/* ===== 管理 CA ===== */
+function renderCA(){
+  var v = el('div');
+  var head = el('div','class="page-head"');
+  head.appendChild(el('h1','','管理 CA'));
+  head.appendChild(el('div','class="sub"','/CA/InitRootCA · /CA/CreateCA（支持 CSR）'));
+  v.appendChild(head);
+
+  var grid = el('div','class="grid cols-2"');
+
+  // 建根
+  var c1 = el('div','class="card"');
+  c1.appendChild(el('h3','','新建根 CA（自签，独立信任树）'));
+  var f1 = el('form');
+  f1.appendChild(el('div','class="field"','<label>Subject</label><input type="text" id="rootName" placeholder="CN=My Root CA,O=Org">'));
+  var pr = el('div','class="field"','<label>策略（按证书用途选）</label>'); var prSel=el('select'); pr.appendChild(prSel); f1.appendChild(pr);
+  state.policies.forEach(function(p){ prSel.appendChild(el('option','value="'+esc(p.name)+'"', esc(p.name)+' · '+esc(p.keyType)+' '+esc(p.keyParams))); });
+  var grk = el('div','class="grid cols-2"');
+  var gk1 = el('div','class="field"','<label>密钥类型（可选覆盖）</label>'); var rk=el('select'); rk.innerHTML='<option value="">跟随策略</option><option value="RSA">RSA</option><option value="EC">EC</option>'; gk1.appendChild(rk); grk.appendChild(gk1);
+  var gk2 = el('div','class="field"','<label>密钥参数（留空用策略默认）</label><input type="text" id="rootKeyParams" placeholder="2048 / P-256">'); grk.appendChild(gk2);
+  f1.appendChild(grk);
+  f1.appendChild(el('div','class="field"','<button type="submit" class="btn primary">创建根 CA</button>'));
+  f1.addEventListener('submit',function(e){
+    e.preventDefault();
+    api('/CA/InitRootCA',{method:'POST',body:JSON.stringify({name:$('#rootName').value.trim()||null,policy:prSel.value,keyType:rk.value||null,keyParams:$('#rootKeyParams').value.trim()||null})})
+      .then(function(r){ toast('根 CA 已创建 '+r.serial); load(); })
+      .catch(function(err){ toast(err.message,true); });
+  });
+  c1.appendChild(f1); grid.appendChild(c1);
+
+  // 建子 CA（服务端密钥）
+  var c2 = el('div','class="card"');
+  c2.appendChild(el('h3','','新建中间 CA（服务端密钥）'));
+  var f2 = el('form');
+  var gpi = el('div','class="field"','<label>父 CA（必须同类型）</label>'); var pi=el('select'); gpi.appendChild(pi); f2.appendChild(gpi);
+  f2.appendChild(el('div','class="field"','<label>Subject</label><input type="text" id="caName" placeholder="CN=Intermediate CA,O=Org">'));
+  var pc2 = el('div','class="field"','<label>策略（可选，默认继承父）</label>'); var pcSel=el('select'); pc2.appendChild(pcSel); f2.appendChild(pc2);
+  pcSel.appendChild(el('option','value="','（继承父 CA 策略）'));
+  state.policies.forEach(function(p){ pcSel.appendChild(el('option','value="'+esc(p.name)+'"', esc(p.name)+' · '+esc(p.keyType))); });
+  f2.appendChild(el('div','class="field"','<button type="submit" class="btn primary">创建中间 CA</button>'));
+  f2.addEventListener('submit',function(e){
+    e.preventDefault();
+    api('/CA/CreateCA',{method:'POST',body:JSON.stringify({name:$('#caName').value.trim()||null,parentSerial:pi.value,policy:pcSel.value||null})})
+      .then(function(r){ toast('中间 CA 已创建 '+r.serial); load(); })
+      .catch(function(err){ toast(err.message,true); });
+  });
+  caOptions(pi,false);
+  c2.appendChild(f2); grid.appendChild(c2);
+  v.appendChild(grid);
+
+  // 建子 CA（CSR）
+  var c3 = el('div','class="card"');
+  c3.appendChild(el('h3','','新建中间 CA（CSR 模式，私钥自持）'));
+  var f3 = el('form');
+  var g3pi = el('div','class="field"','<label>父 CA</label>'); var pi3=el('select'); g3pi.appendChild(pi3); f3.appendChild(g3pi);
+  f3.appendChild(el('div','class="field"','<label>CA CSR（PKCS#10 PEM）</label><textarea id="caCsr" rows="6" placeholder="-----BEGIN CERTIFICATE REQUEST-----&#10;...&#10;-----END CERTIFICATE REQUEST-----"></textarea>'));
+  f3.appendChild(el('div','class="field"','<label>Subject 覆盖（可选，默认取 CSR）</label><input type="text" id="caCsrName" placeholder="CN=Intermediate CA">'));
+  f3.appendChild(el('div','class="field"','<button type="submit" class="btn primary">按 CSR 创建中间 CA</button>'));
+  f3.addEventListener('submit',function(e){
+    e.preventDefault();
+    if(!$('#caCsr').value.trim()){ toast('请粘贴 CA CSR',true); return; }
+    api('/CA/CreateCA',{method:'POST',body:JSON.stringify({name:$('#caCsrName').value.trim()||null,parentSerial:pi3.value,csr:$('#caCsr').value})})
+      .then(function(r){ toast('中间 CA 已创建 '+r.serial); load(); })
+      .catch(function(err){ toast(err.message,true); });
+  });
+  caOptions(pi3,false);
+  c3.appendChild(f3); v.appendChild(c3);
+
+  $('#view').innerHTML=''; $('#view').appendChild(v);
+}
+
+/* ===== 策略 ===== */
+var CERT_TYPES = [
+  ['web','Web 证书（TLS）'],['email-client','邮件/客户端证书'],['code-signing','代码签名证书'],['custom','自定义']
+];
+function certTypeLabel(t){ for(var i=0;i<CERT_TYPES.length;i++) if(CERT_TYPES[i][0]===t) return CERT_TYPES[i][1]; return t||'自定义'; }
+function certTypeOf(p){
+  if(!p) return 'custom';
+  if(p.certType) return p.certType;
+  var n=p.name||'';
+  if(n==='Web TLS') return 'web';
+  if(n.indexOf('邮件')>=0) return 'email-client';
+  if(n.indexOf('代码签名')>=0) return 'code-signing';
+  return 'custom';
+}
+var EKU_PRESETS = [
+  ['serverAuth','1.3.6.1.5.5.7.3.1'],['clientAuth','1.3.6.1.5.5.7.3.2'],
+  ['codeSigning','1.3.6.1.5.5.7.3.3'],['emailProtection','1.3.6.1.5.5.7.3.4'],
+  ['timeStamping','1.3.6.1.5.5.7.3.8'],['OCSPSigning','1.3.6.1.5.5.7.3.9']
+];
+var KU_NAMES = ['digitalSignature','nonRepudiation','keyEncipherment','dataEncipherment','keyAgreement','keyCertSign','cRLSign'];
+function openPolicyModal(p){
+  var mask=$('#mask'); mask.innerHTML=''; mask.classList.add('show');
+  var m = el('div','class="modal"');
+  m.appendChild(el('h2','', p?'编辑策略：'+esc(p.name):'新建策略'));
+  var f = el('form');
+  f.appendChild(el('div','class="field"','<label>名称</label><input type="text" id="pName" value="'+esc(p?p.name:'')+'">'));
+  var grp = el('div','class="grid cols-3"');
+  var gt = el('div','class="field"','<label>证书用途类型</label>'); var ct=el('select'); grp.appendChild(gt);
+  CERT_TYPES.forEach(function(x){ ct.appendChild(el('option','value="'+x[0]+'"',x[1])); });
+  ct.value = certTypeOf(p); gt.appendChild(ct);
+  var gval = el('div','class="field"','<label>验证种类（不自动验证）</label>'); var val=el('select'); grp.appendChild(gval);
+  [['DV','DV（域名验证）'],['OV','OV（组织验证）'],['EV','EV（扩展验证）'],['','自定义']].forEach(function(x){ val.appendChild(el('option','value="'+x[0]+'"',x[1])); });
+  val.value = p?(p.validation||''):'DV'; gval.appendChild(val);
+  var gin = el('div','class="field"','<label><input type="checkbox" id="pInternal" '+(p&&p.isInternal?'checked':'')+'> 内部自用（不对外）</label>'); grp.appendChild(gin);
+  f.appendChild(grp);
+  var gr = el('div','class="grid cols-2"');
+  var gk = el('div','class="field"','<label>密钥类型</label>'); var kt=el('select'); kt.innerHTML='<option value="RSA">RSA</option><option value="EC">EC</option>'; kt.value=p?p.keyType:'RSA'; gk.appendChild(kt);
+  var gkp = el('div','class="field"','<label>密钥参数（RSA 位数 / EC 曲线）</label><input type="text" id="pKeyParams" value="'+esc(p?p.keyParams:'2048')+'">'); gk.appendChild(gkp); gr.appendChild(gk); gr.appendChild(gkp);
+  var gv = el('div','class="grid cols-2"');
+  var gc = el('div','class="field"','<label>CA 有效期（天）</label><input type="number" id="pCaValid" value="'+(p?p.caValidityDays:1825)+'">'); gv.appendChild(gc);
+  var gl = el('div','class="field"','<label>叶子有效期（天）</label><input type="number" id="pLeafValid" value="'+(p?p.leafValidityDays:90)+'">'); gv.appendChild(gl);
+  f.appendChild(gr); f.appendChild(gv);
+  f.appendChild(el('div','class="field"','<label>签名算法（留空自动：RSA→SHA256withRSA，EC→SHA256withECDSA）</label><input type="text" id="pSignAlgo" value="'+esc(p?(p.signAlgo||''):'')+'" placeholder="SHA256withRSA / SHA256withECDSA">'));
+  var ga = el('div','class="field"','<label><input type="checkbox" id="pAIA" '+(p? (p.useAIA?'checked':'') : 'checked')+'> 签发时写入 AIA / CDP 扩展</label>'); f.appendChild(ga);  var gku = el('div','class="field"','<label>KeyUsage（用途位）</label>'); f.appendChild(gku);
+  var curKu = (p?p.keyUsage:'digitalSignature,keyEncipherment')||'';
+  var kuSet = curKu.split(',').map(function(s){return s.trim().toLowerCase();});
+  var ck = el('div','class="checks" id="pKuChecks"');
+  KU_NAMES.forEach(function(n){
+    var lab=el('label','','<input type="checkbox" value="'+n+'"'+(kuSet.indexOf(n)>=0?' checked':'')+'> '+n);
+    ck.appendChild(lab);
+  });
+  gku.appendChild(ck);
+  var pEkuInput = el('input','type="text" id="pEku" value="'+esc(p?(p.extUsageOids||''):'1.3.6.1.5.5.7.3.1,1.3.6.1.5.5.7.3.2')+'"');
+  var geko = el('div','class="field"','<label>扩展用途 OID（ExtendedKeyUsage，逗号分隔；留空默认 serverAuth,clientAuth）</label>');
+  geko.appendChild(pEkuInput);
+  var ekuHint = el('div','id="pEkuHint" class="mono dim" style="font-size:11px;margin-top:4px"');
+  var refreshEkuHint = function(){
+    var out = oidListReadable(pEkuInput.value).map(function(x){return x.name;}).join(' · ');
+    ekuHint.textContent = out ? ('→ '+out) : '';
+  };
+  pEkuInput.addEventListener('input', refreshEkuHint);
+  geko.appendChild(ekuHint);
+  var qk = el('div','class="quick"');
+  EKU_PRESETS.forEach(function(x){
+    var b=el('button','type="button" class="small"',x[0]);
+    b.addEventListener('click',function(){
+      var cur=pEkuInput.value.split(',').map(function(s){return s.trim();}).filter(Boolean);
+      if(cur.indexOf(x[1])<0) cur.push(x[1]);
+      pEkuInput.value=cur.join(',');
+      refreshEkuHint();
+    });
+    qk.appendChild(b);
+  });
+  geko.appendChild(qk); f.appendChild(geko);
+  var foot = el('div','class="modal-foot"');
+  var cancel = el('button','type="button"','取消'); cancel.addEventListener('click',function(){mask.classList.remove('show');});
+  var save = el('button','type="submit" class="btn primary"', p?'保存修改':'创建策略');
+  foot.appendChild(cancel); foot.appendChild(save); f.appendChild(foot);
+  m.appendChild(f); mask.appendChild(m);
+  refreshEkuHint();
+  f.addEventListener('submit',function(e){
+    e.preventDefault();
+    var ku = Array.prototype.map.call($('#pKuChecks').querySelectorAll('input:checked'),function(i){return i.value;}).join(',');
+    var payload = {
+      name:$('#pName').value.trim(), keyType:kt.value, keyParams:$('#pKeyParams').value.trim(),
+      signAlgo:$('#pSignAlgo').value.trim()||null,
+      caValidityDays:parseInt($('#pCaValid').value,10)||null, leafValidityDays:parseInt($('#pLeafValid').value,10)||null,
+      useAIA:$('#pAIA').checked, keyUsage:ku, extUsageOids:$('#pEku').value.trim()||null,
+      certType:ct.value, validation:val.value||null, internal:$('#pInternal').checked
+    };
+    var url = p?('/CA/policies/'+p.id):'/CA/policies';
+    api(url,{method:p?'PUT':'POST',body:JSON.stringify(payload)})
+      .then(function(){ toast(p?'策略已更新':'策略已创建'); mask.classList.remove('show'); load(); })
+      .catch(function(err){ toast(err.message,true); });
+  });
+}
+function renderPolicies(){
+  var v = el('div');
+  var head = el('div','class="page-head"');
+  head.appendChild(el('h1','','签发策略'));
+  head.appendChild(el('div','class="sub"','每个策略独立决定密钥类型 / 有效期 / KeyUsage / EKU，按证书类型分开'));
+  var nb = el('button','class="btn primary"','新建策略'); nb.addEventListener('click',function(){openPolicyModal(null);});
+  head.appendChild(nb);
+  v.appendChild(head);
+
+  var card = el('div','class="card"');
+  var t = el('table');
+  var tr = el('tr','', '<th>名称</th><th>用途</th><th>验证</th><th>密钥</th><th>签名算法</th><th>CA/叶子有效期</th><th>AIA</th><th>KeyUsage</th><th>扩展用途 OID</th><th>操作</th>');
+  var thead=el('thead'); thead.appendChild(tr); t.appendChild(thead);
+  var tb=el('tbody');
+  state.policies.forEach(function(p){
+    var row=el('tr');
+    var tdName=el('td','','<b>'+esc(p.name)+'</b>'+(p.isInternal?' <span class="pill" style="color:#c9a227;border-color:#4a3f12">内部</span>':''));
+    var tdCt=el('td','',esc(certTypeLabel(certTypeOf(p))));
+    var tdVal=el('td','', p.validation?('<span class="pill">'+esc(p.validation)+'</span>'):'<span class="dim">-</span>');
+    var tdK=el('td','','<span class="pill '+(p.keyType==='EC'?'ec':'rsa')+'">'+esc(p.keyType)+' '+esc(p.keyParams)+'</span>');
+    var tdS=el('td','class="mono"',esc(p.signAlgo||('自动·'+p.keyType)));
+    var tdV=el('td','class="mono"',p.caValidityDays+'d / '+p.leafValidityDays+'d');
+    var tdA=el('td','',p.useAIA?'是':'否');
+    var tdKu=el('td','class="mono" style="font-size:11px"',esc(p.keyUsage||'（按用途默认）'));
+    var ekuReadable = oidListReadable(p.extUsageOids).map(function(x){return esc(x.name)+(x.name!==x.oid?(' <span class="dim">'+esc(x.oid)+'</span>'):'');}).join('<br>');
+    var tdE=el('td','style="font-size:11px"', p.extUsageOids? ekuReadable : '<span class="dim">（按用途默认）</span>');
+    var tdOp=el('td');
+    var eb=el('button','class="small"','编辑'); eb.addEventListener('click',function(){openPolicyModal(p);});
+    var db=el('button','class="small danger"','删除'); db.addEventListener('click',function(){
+      if(!confirm('删除策略「'+p.name+'」？已被证书引用的策略无法删除。')) return;
+      api('/CA/policies/'+p.id,{method:'DELETE'}).then(function(){toast('策略已删除');load();}).catch(function(err){toast(err.message,true);});
+    });
+    tdOp.appendChild(eb); tdOp.appendChild(el('span','style="display:inline-block;width:6px"','')); tdOp.appendChild(db);
+    row.appendChild(tdName); row.appendChild(tdCt); row.appendChild(tdVal); row.appendChild(tdK); row.appendChild(tdS); row.appendChild(tdV); row.appendChild(tdA); row.appendChild(tdKu); row.appendChild(tdE); row.appendChild(tdOp);
+    tb.appendChild(row);
+  });
+  t.appendChild(tb); card.appendChild(t); v.appendChild(card);
+  $('#view').innerHTML=''; $('#view').appendChild(v);
+}
+
+/* ===== 详情 ===== */
+function policyById(id){ for(var i=0;i<state.policies.length;i++) if(state.policies[i].id===id) return state.policies[i]; return null; }
+function chainOf(serial){
+  var chain=[]; var seen={}; var cur=serial;
+  while(cur && !seen[cur]){
+    seen[cur]=1;
+    var c = state.certs.filter(function(x){return x.serial===cur;})[0];
+    if(!c) break;
+    chain.push(c); cur=c.issuerSerial;
+  }
+  return chain;
+}
+function renderDetail(){
+  var serial = getQuery('serial');
+  var c = state.certs.filter(function(x){return x.serial===serial;})[0];
+  var v = el('div');
+  if(!c){ v.appendChild(el('div','class="card"','<div class="empty">证书不存在或已删除。<a href="#overview">返回概览</a></div>')); $('#view').innerHTML=''; $('#view').appendChild(v); return; }
+  var head = el('div','class="page-head"');
+  var hd = el('div');
+  hd.appendChild(el('h1','',esc(c.subject)));
+  hd.appendChild(el('div','class="sub"',esc(c.kind.toUpperCase())+' · '+esc(keyName(c))+' · '+esc(shortSerial(c.serial,24))));
+  head.appendChild(hd);
+  var back = el('button','class="btn"','← 返回'); back.addEventListener('click',function(){location.hash='#overview';});
+  head.appendChild(back);
+  v.appendChild(head);
+
+  var card = el('div','class="card"');
+  card.appendChild(el('h3','','基本信息'));
+  var kv = el('dl','class="kv"');
+  var rows = [
+    ['序列号', c.serial], ['类型', c.kind+(c.isCA?'（CA）':'')], ['签发者', issuerLabel(c)],
+    ['密钥', keyName(c)], ['策略', c.policyId?policyById(c.policyId).name:'-'],
+    ['SAN', c.san||'-'], ['有效期', fmtDate(c.notBefore)+' → '+fmtDate(c.notAfter)],
+    ['状态', c.status==='revoked'?('REVOKED'+(c.revokeReason?' · '+c.revokeReason:'')):'VALID']
+  ];
+  rows.forEach(function(r){ kv.appendChild(el('dt','',r[0])); kv.appendChild(el('dd','',esc(r[1]))); });
+  card.appendChild(kv);
+  // 主体信息：把 CN=xxx,O=yyy 拆成普通用户可读字段
+  var sf = subjFields(c);
+  var subjBlock = el('div','style="margin-top:12px"');
+  subjBlock.appendChild(el('div','class="dim" style="font-size:12px;margin-bottom:4px"','主体信息（Subject）'));
+  if(sf.length){
+    sf.forEach(function(f){
+      subjBlock.appendChild(el('div','style="display:flex;gap:10px;padding:3px 0;font-size:13px"',
+        '<span class="dim" style="width:130px;flex:0 0 auto">'+esc(subjLabel(f))+'</span><span>'+esc(f.value)+'</span>'));
+    });
+    subjBlock.appendChild(el('div','class="mono dim" style="font-size:11px;margin-top:6px"', esc(c.subject)));
+  } else {
+    subjBlock.appendChild(el('div','class="mono" style="font-size:12px"',esc(c.subject)));
+  }
+  card.appendChild(subjBlock);
+  var p = policyById(c.policyId);
+  if(p){
+    var ekuItems = oidListReadable(p.extUsageOids);
+    var ekuHtml = p.extUsageOids
+      ? ekuItems.map(function(x){return esc(x.name)+(x.name!==x.oid?(' <span class="dim" style="font-size:11px">'+esc(x.oid)+'</span>'):'');}).join('<br>')
+      : '<span class="dim">（默认 serverAuth, clientAuth）</span>';
+    var kuHtml = p.keyUsage ? esc(p.keyUsage) : '<span class="dim">（默认）</span>';
+    card.appendChild(el('div','style="margin-top:12px"','<div class="dim" style="font-size:12px;margin-bottom:4px">所用策略 '+esc(p.name)+' 决定以下用途：</div><div style="font-size:12px">KeyUsage: <span class="mono">'+kuHtml+'</span></div><div style="font-size:12px;margin-top:4px">扩展用途（EKU）:</div><div style="font-size:12px;margin-left:8px">'+ekuHtml+'</div>'));
+  }
+  v.appendChild(card);
+
+  var chainCard = el('div','class="card"');
+  chainCard.appendChild(el('h3','','证书链（'+chainOf(serial).length+' 级）'));
+  var ch = chainOf(serial);
+  ch.forEach(function(x,idx){
+    var cr = el('div','class="chainrow"');
+    cr.appendChild(el('div','class="idx"','#'+(idx+1)));
+    var ci = el('div','class="ci"');
+    ci.appendChild(el('div','style="font-weight:600"',esc(subjCN(x))+(subjOrg(x)?(' <span class="dim" style="font-size:11px">'+esc(subjOrg(x))+'</span>'):'')+' '+('<span class="pill '+x.kind+'">'+x.kind.toUpperCase()+'</span>')));
+    ci.appendChild(el('div','class="serial mono dim" style="font-size:11px"',esc(x.serial)+(x.status==='revoked'?' · REVOKED':'')));
+    cr.appendChild(ci);
+    var ops = el('div','class="ops"');
+    var dl = el('button','class="small"','下载'); dl.addEventListener('click',function(){window.open('/CA/certs/'+x.serial+'/crt','_blank');});
+    ops.appendChild(dl);
+    cr.appendChild(ops);
+    chainCard.appendChild(cr);
+  });
+  var chainOps = el('div','style="margin-top:10px;display:flex;gap:8px"');
+  var dlAll = el('button','class="btn primary"','下载完整链（PEM）'); dlAll.addEventListener('click',function(){window.open('/CA/certs/'+serial+'/chain','_blank');});
+  chainOps.appendChild(dlAll);
+  if(c.isCA){
+    var dlCrl = el('button','class="btn"','下载该 CA 的 CRL'); dlCrl.addEventListener('click',function(){window.open('/CA/crl/'+serial,'_blank');});
+    chainOps.appendChild(dlCrl);
+  }
+  chainCard.appendChild(chainOps);
+  v.appendChild(chainCard);
+
+  if(c.kind!=='root' && c.status!=='revoked'){
+    var rCard = el('div','class="card"');
+    rCard.appendChild(el('h3','','吊销'));
+    var rf = el('form','style="display:flex;gap:8px;align-items:center"');
+    var ri = el('input','type="text" id="revReason" placeholder="吊销原因（可选）" style="width:260px"'); rf.appendChild(ri);
+    var rb = el('button','type="button" class="btn danger"','吊销此证书'); rb.addEventListener('click',function(){
+      if(!confirm('确定吊销 '+c.serial+' ？吊销后 OCSP 将返回 revoked。')) return;
+      api('/CA/Revoke',{method:'POST',body:JSON.stringify({serial:c.serial,reason:$('#revReason').value.trim()||null})})
+        .then(function(){toast('已吊销 '+c.serial);load();}).catch(function(err){toast(err.message,true);});
+    });
+    rf.appendChild(rb);
+    rCard.appendChild(rf);
+    v.appendChild(rCard);
+  }
+
+  $('#view').innerHTML=''; $('#view').appendChild(v);
+}
+
+/* ===== 启动 ===== */
+load();
+</script>
+</body>
+</html>

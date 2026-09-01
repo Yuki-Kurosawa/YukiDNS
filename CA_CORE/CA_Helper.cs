@@ -1,224 +1,266 @@
-﻿using Org.BouncyCastle.Asn1.Pkcs;
-using Org.BouncyCastle.Asn1.X509;
 using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Pkcs;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Asn1.X9;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Operators;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.OpenSsl;
 using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
-using Org.BouncyCastle.X509.Extension;
 using Org.BouncyCastle.X509;
+using Org.BouncyCastle.X509.Extension;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using Org.BouncyCastle.Math;
-using Org.BouncyCastle.OpenSsl;
-using Org.BouncyCastle.Crypto;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 
 namespace YukiDNS.CA_CORE
 {
-    public class CA_Helper
+    /// <summary>
+    /// 证书构造工具：RSA / EC 通用。
+    /// - 密钥生成、密钥类型判定（RSA / EC）
+    /// - 通用签发（任意层级、AIA/CDP 按「直接签发者」传入，天然支持任意深度同类型链）
+    /// - CSR（PKCS#10）解析：取 subject / 公钥 / 请求的 SAN
+    /// </summary>
+    public static class CA_Helper
     {
-        public static void GenerateSelfSignCert(CA_Config config, string name, AsymmetricCipherKeyPair key)
+        public const string KeyTypeRSA = "RSA";
+        public const string KeyTypeEC = "EC";
+
+        /// <summary>按密钥类型推导默认签名算法。</summary>
+        public static string DefaultSignAlgo(string keyType)
         {
-            Asn1SignatureFactory asn = new Asn1SignatureFactory(config.SignMethod, key.Private, new SecureRandom());
+            return keyType == KeyTypeEC ? "SHA256withECDSA" : "SHA256withRSA";
+        }
+
+        // ---------- 密钥生成 ----------
+
+        public static AsymmetricCipherKeyPair GenerateRsaKey(int keySize)
+        {
+            using var rsa = new RSACryptoServiceProvider(keySize);
+            return DotNetUtilities.GetRsaKeyPair(rsa);
+        }
+
+        public static AsymmetricCipherKeyPair GenerateEcKey(string curveName)
+        {
+            if (string.IsNullOrEmpty(curveName)) curveName = "P-256";
+            var x9 = ECNamedCurveTable.GetByName(curveName);
+            if (x9 == null) throw new InvalidOperationException("Unknown EC curve: " + curveName);
+            var domain = new ECDomainParameters(x9);
+            var gen = new ECKeyPairGenerator();
+            gen.Init(new ECKeyGenerationParameters(domain, new SecureRandom()));
+            return gen.GenerateKeyPair();
+        }
+
+        /// <summary>按策略生成密钥对。</summary>
+        public static AsymmetricCipherKeyPair GenerateKeyForPolicy(string keyType, string keyParams)
+        {
+            if (keyType == KeyTypeEC) return GenerateEcKey(keyParams);
+            int size = int.TryParse(keyParams, out var s) && s >= 1024 ? s : 2048;
+            return GenerateRsaKey(size);
+        }
+
+        /// <summary>判定密钥类型：RSA | EC。</summary>
+        public static string GetKeyType(AsymmetricKeyParameter key)
+        {
+            if (key is RsaKeyParameters) return KeyTypeRSA;
+            if (key is ECKeyParameters) return KeyTypeEC;
+            throw new InvalidOperationException("Unsupported key type: " + key.GetType().Name);
+        }
+
+        // ---------- 通用签发 ----------
+
+        /// <summary>
+        /// <summary>
+        /// 通用签发：issuer 与 subject 相同即为自签（root）。
+        /// signAlgo 按签发者密钥类型传入（RSA→SHA256withRSA，EC→SHA256withECDSA）。
+        /// keyUsage 为 KeyUsage 位掩码；isCA=true 时强制追加 KeyCertSign|CrlSign。
+        /// ekuOids 为 ExtendedKeyUsage OID 字符串列表，null/空 = 不设 EKU。
+        /// </summary>
+        public static Org.BouncyCastle.X509.X509Certificate GenerateCertificate(
+            string signAlgo,
+            bool useAia,
+            string issuerDN,
+            AsymmetricKeyParameter issuerPublicKey,
+            AsymmetricCipherKeyPair signerKey,
+            string subjectDN,
+            BigInteger serial,
+            DateTime notBefore,
+            DateTime notAfter,
+            AsymmetricKeyParameter subjectPublicKey,
+            bool isCA,
+            int pathLenConstraint,      // -1 = 不限制（root 常用），CA 传 >=0，叶子忽略
+            string[] dnsNames,          // 仅叶子
+            int keyUsage,               // KeyUsage 位掩码
+            string[] ekuOids,           // EKU OID 列表（null = 不设）
+            string caIssuersUrl,        // AIA.CAIssuers：签发者证书下载地址；root 为 null
+            string ocspUrl,             // AIA.OCSP 地址
+            string crlUrl)              // CDP：签发者 CRL 地址；root 为 null
+        {
+            var asn = new Asn1SignatureFactory(signAlgo, signerKey.Private, new SecureRandom());
             var gen = new X509V3CertificateGenerator();
-            gen.SetIssuerDN(new X509Name(name));
-            gen.SetSubjectDN(new X509Name(name));
-            gen.SetSerialNumber(new BigInteger("1"));
-            gen.SetNotBefore(DateTime.Now.Date);
-            gen.SetNotAfter(DateTime.Now.AddDays(config.SelfSignCACertExpire).Date);
-            gen.SetPublicKey(key.Public);
+            gen.SetIssuerDN(new X509Name(issuerDN));
+            gen.SetSubjectDN(new X509Name(subjectDN));
+            gen.SetSerialNumber(serial);
+            gen.SetNotBefore(notBefore);
+            gen.SetNotAfter(notAfter);
+            gen.SetPublicKey(subjectPublicKey);
 
-            // extended information
-            gen.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifierStructure(key.Public));
-            gen.AddExtension(X509Extensions.SubjectKeyIdentifier, false, new SubjectKeyIdentifierStructure(key.Public));
+            gen.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifierStructure(issuerPublicKey));
+            gen.AddExtension(X509Extensions.SubjectKeyIdentifier, false, new SubjectKeyIdentifierStructure(subjectPublicKey));
 
-            gen.AddExtension(X509Extensions.ExtendedKeyUsage, false, new ExtendedKeyUsage(
-                new DerObjectIdentifier[] {
-                    KeyPurposeID.id_kp_serverAuth,
-                    KeyPurposeID.id_kp_clientAuth,
-                    new DerObjectIdentifier("1.2.3.4.5.6")
-                }));
-            gen.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(3));
-            gen.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyEncipherment | KeyUsage.CrlSign | KeyUsage.KeyCertSign));
-
-
-            if (config.AIAConfig.UseAIA)
+            if (isCA)
             {
-
-                GeneralName ocsp = new GeneralName(GeneralName.UniformResourceIdentifier, config.AIAConfig.OCSPMethod);
-                GeneralName ci = new GeneralName(GeneralName.UniformResourceIdentifier, config.AIAConfig.CAIssuer);
-
-                AuthorityInformationAccess aia = new AuthorityInformationAccess(new[]
-                {
-                    new AccessDescription(X509ObjectIdentifiers.OcspAccessMethod, ocsp) ,
-                    new AccessDescription(X509ObjectIdentifiers.IdADCAIssuers, ci) ,
-                });
-
-                gen.AddExtension(X509Extensions.AuthorityInfoAccess, false, aia.ToAsn1Object());
+                gen.AddExtension(X509Extensions.BasicConstraints, true,
+                    pathLenConstraint >= 0 ? new BasicConstraints(pathLenConstraint) : new BasicConstraints(true));
+                // CA 必须能签证书与 CRL，策略位之上强制追加
+                gen.AddExtension(X509Extensions.KeyUsage, true,
+                    new KeyUsage(keyUsage | KeyUsage.KeyCertSign | KeyUsage.CrlSign));
+            }
+            else
+            {
+                gen.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(false));
+                gen.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(keyUsage));
             }
 
-            var cert = gen.Generate(asn);
-
-            StringBuilder pb = new StringBuilder();
-            PemWriter pw = new PemWriter(new StringWriter(pb));
-            pw.WriteObject(cert);
-            string ca = pb.ToString();
-            File.WriteAllText(config.CertDir + "ca.crt", ca);
-
-            StringBuilder pb2 = new StringBuilder();
-            PemWriter pw2 = new PemWriter(new StringWriter(pb2));
-            pw2.WriteObject(key.Private);
-            string ca2 = pb2.ToString();
-            File.WriteAllText(config.CertDir + "ca.pem", ca2);
-
-            var certEntry = new X509CertificateEntry(cert);
-            var store = new Pkcs12StoreBuilder().Build();
-            store.SetCertificateEntry("CERT", certEntry);   //设置证书  
-            var chain = new X509CertificateEntry[1];
-            chain[0] = certEntry;
-            store.SetKeyEntry("CERT", new AsymmetricKeyEntry(key.Private), chain);   //设置私钥  
-            SecureRandom random = new SecureRandom();
-            using (var fs = File.Create(config.CertDir + "ca.pfx"))
+            if (ekuOids != null && ekuOids.Length > 0)
             {
-                store.Save(fs, "123456".ToCharArray(), random); //保存  
+                gen.AddExtension(X509Extensions.ExtendedKeyUsage, false, new ExtendedKeyUsage(
+                    ekuOids.Select(o => new DerObjectIdentifier(o.Trim())).ToArray()));
             }
-            ;
 
-            X509ExtensionsGenerator sg = new X509ExtensionsGenerator();
-            X509Extensions sans = sg.Generate();
-            Asn1Set asn1 = new DerSet(new AttributeX509(PkcsObjectIdentifiers.Pkcs9AtExtensionRequest, new DerSet(sans)));
-
-            Pkcs10CertificationRequest request = new Pkcs10CertificationRequest("sha256withRSA", new X509Name(name), key.Public, asn1, key.Private);
-            StringBuilder pb3 = new StringBuilder();
-            PemWriter pw3 = new PemWriter(new StringWriter(pb3));
-            pw3.WriteObject(request);
-            string ca3 = pb3.ToString();
-            File.WriteAllText(config.CertDir + "ca.csr", ca3);
-        }
-
-        public static void GenerateLayer2Cert(CA_Config config, string caname, string name, AsymmetricCipherKeyPair cakey, AsymmetricCipherKeyPair key)
-        {
-            Asn1SignatureFactory subasn = new Asn1SignatureFactory("SHA256withRSA", cakey.Private, new SecureRandom());
-
-
-            var subgen = new X509V3CertificateGenerator();
-            subgen.SetIssuerDN(new X509Name(caname));
-            subgen.SetSubjectDN(new X509Name(name));
-            subgen.SetSerialNumber(new BigInteger("2"));
-            subgen.SetNotBefore(DateTime.Now.Date);
-            subgen.SetNotAfter(DateTime.Now.AddDays(config.CACertExpire).Date);
-            subgen.SetPublicKey(key.Public);
-
-            // extended information
-            subgen.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifierStructure(cakey.Public));
-            subgen.AddExtension(X509Extensions.SubjectKeyIdentifier, false, new SubjectKeyIdentifierStructure(key.Public));
-
-            subgen.AddExtension(X509Extensions.ExtendedKeyUsage, false, new ExtendedKeyUsage(
-                new DerObjectIdentifier[] {
-                    KeyPurposeID.id_kp_serverAuth,
-                    KeyPurposeID.id_kp_clientAuth,
-                    new DerObjectIdentifier("1.2.3.4.5.6")
-                }));
-            subgen.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(2));
-            subgen.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyEncipherment | KeyUsage.CrlSign | KeyUsage.KeyCertSign));
-
-
-            var subcert = subgen.Generate(subasn);
-
-            StringBuilder subpb = new StringBuilder();
-            PemWriter subpw = new PemWriter(new StringWriter(subpb));
-            subpw.WriteObject(subcert);
-            string subca = subpb.ToString();
-            File.WriteAllText(config.CertDir + "subca.crt", subca);
-
-            StringBuilder pb2 = new StringBuilder();
-            PemWriter pw2 = new PemWriter(new StringWriter(pb2));
-            pw2.WriteObject(key.Private);
-            string ca2 = pb2.ToString();
-            File.WriteAllText(config.CertDir + "subca.pem", ca2);
-        }
-
-        public static void GenerateWebServerCert(CA_Config config, string caname, string name, string dnsnames, AsymmetricCipherKeyPair cakey, AsymmetricCipherKeyPair key)
-        {
-            Asn1SignatureFactory subasn = new Asn1SignatureFactory("SHA256withRSA", cakey.Private, new SecureRandom());
-
-
-            var subgen = new X509V3CertificateGenerator();
-            subgen.SetIssuerDN(new X509Name(caname));
-            subgen.SetSubjectDN(new X509Name(name));
-            subgen.SetSerialNumber(new BigInteger("3"));
-            subgen.SetNotBefore(DateTime.Now.Date);
-            subgen.SetNotAfter(DateTime.Now.AddDays(config.EndUserCertExpire).Date);
-            subgen.SetPublicKey(key.Public);
-
-            // extended information
-            subgen.AddExtension(X509Extensions.AuthorityKeyIdentifier, false, new AuthorityKeyIdentifierStructure(cakey.Public));
-            subgen.AddExtension(X509Extensions.SubjectKeyIdentifier, false, new SubjectKeyIdentifierStructure(key.Public));
-
-            subgen.AddExtension(X509Extensions.ExtendedKeyUsage, false, new ExtendedKeyUsage(
-                new DerObjectIdentifier[] {
-                    KeyPurposeID.id_kp_serverAuth,
-                    new DerObjectIdentifier("1.2.3.4.5.6")
-                }));
-            subgen.AddExtension(X509Extensions.BasicConstraints, true, new BasicConstraints(false));
-            subgen.AddExtension(X509Extensions.KeyUsage, true, new KeyUsage(KeyUsage.DigitalSignature | KeyUsage.KeyEncipherment));
-
-            GeneralNames gns1 = null;
-
-            List<GeneralName> gnsl = new List<GeneralName>();
-
-            string[] dnsnamelist = dnsnames.Split(',');
-
-            foreach (string dnsname in dnsnamelist)
+            if (!isCA && dnsNames != null && dnsNames.Length > 0)
             {
-                if (!string.IsNullOrEmpty(dnsname.Trim()))
+                var gnsl = new List<GeneralName>();
+                foreach (var dn in dnsNames)
+                    gnsl.Add(new GeneralName(GeneralName.DnsName, dn));
+                gen.AddExtension(X509Extensions.SubjectAlternativeName, false,
+                    new GeneralNames(gnsl.ToArray()).ToAsn1Object());
+            }
+
+            if (useAia)
+            {
+                var access = new List<AccessDescription>();
+                if (!string.IsNullOrEmpty(ocspUrl))
+                    access.Add(new AccessDescription(X509ObjectIdentifiers.OcspAccessMethod,
+                        new GeneralName(GeneralName.UniformResourceIdentifier, ocspUrl)));
+                if (!string.IsNullOrEmpty(caIssuersUrl))
+                    access.Add(new AccessDescription(X509ObjectIdentifiers.IdADCAIssuers,
+                        new GeneralName(GeneralName.UniformResourceIdentifier, caIssuersUrl)));
+                if (access.Count > 0)
+                    gen.AddExtension(X509Extensions.AuthorityInfoAccess, false,
+                        new AuthorityInformationAccess(access.ToArray()).ToAsn1Object());
+
+                if (!string.IsNullOrEmpty(crlUrl))
                 {
-                    gnsl.Add(new GeneralName(GeneralName.DnsName, dnsname.Trim()));
+                    var cdp = new CrlDistPoint(new DistributionPoint[] {
+                        new DistributionPoint(
+                            new DistributionPointName(new GeneralNames(
+                                new GeneralName(GeneralName.UniformResourceIdentifier, crlUrl))),
+                            null, null)
+                    });
+                    gen.AddExtension(X509Extensions.CrlDistributionPoints, false, cdp.ToAsn1Object());
                 }
             }
 
-            //new GeneralNames(new GeneralName[] {
-            //        new GeneralName(GeneralName.DnsName,"localhost"),
-            //        new GeneralName(GeneralName.IPAddress,"127.0.0.1"),
-            //        new GeneralName(GeneralName.IPAddress,"::1"),
-            //        new GeneralName(GeneralName.Rfc822Name,"admin@test.root"),
-            //        new GeneralName(GeneralName.Rfc822Name,"www@test.root"),
-            //    });
-
-            if (gnsl.Count > 0)
-            {
-                gns1 = new GeneralNames(gnsl.ToArray());
-                subgen.AddExtension(X509Extensions.SubjectAlternativeName, false, gns1.ToAsn1Object());
-
-            }
-
-            var subcert = subgen.Generate(subasn);
-
-            StringBuilder subpb = new StringBuilder();
-            PemWriter subpw = new PemWriter(new StringWriter(subpb));
-            subpw.WriteObject(subcert);
-            string subca = subpb.ToString();
-            File.WriteAllText(config.CertDir + "user.crt", subca);
-
-            StringBuilder pb2 = new StringBuilder();
-            PemWriter pw2 = new PemWriter(new StringWriter(pb2));
-            pw2.WriteObject(key.Private);
-            string ca2 = pb2.ToString();
-            File.WriteAllText(config.CertDir + "user.pem", ca2);
+            return gen.Generate(asn);
         }
 
+        // ---------- PEM / 密钥加载 ----------
 
+        public static void WritePEM(object o, string path)
+        {
+            var sb = new StringBuilder();
+            var pw = new PemWriter(new StringWriter(sb));
+            pw.WriteObject(o);
+            pw.Writer.Flush();
+            File.WriteAllText(path, sb.ToString());
+        }
+
+        public static string ToPEM(object o)
+        {
+            var sb = new StringBuilder();
+            var pw = new PemWriter(new StringWriter(sb));
+            pw.WriteObject(o);
+            pw.Writer.Flush();
+            return sb.ToString();
+        }
+
+        /// <summary>加载 RSA 或 EC 私钥（兼容 PKCS#1 / SEC1 / PKCS#8 密钥对多种写法）。</summary>
+        public static AsymmetricCipherKeyPair LoadKeyPair(string pemPath)
+        {
+            object obj;
+            using (var sr = new StreamReader(pemPath))
+            {
+                obj = new PemReader(sr).ReadObject();
+            }
+
+            if (obj is AsymmetricCipherKeyPair kp)
+                return kp;
+
+            if (obj is RsaPrivateCrtKeyParameters rp)
+            {
+                var pub = new RsaKeyParameters(false, rp.Modulus, rp.PublicExponent);
+                return new AsymmetricCipherKeyPair(pub, rp);
+            }
+
+            if (obj is ECPrivateKeyParameters ep)
+            {
+                var q = ep.Parameters.G.Multiply(ep.D).Normalize();
+                var pub = new ECPublicKeyParameters(ep.AlgorithmName, q, ep.Parameters);
+                return new AsymmetricCipherKeyPair(pub, ep);
+            }
+
+            throw new InvalidOperationException("Unsupported private key format: " + pemPath);
+        }
+
+        public static Org.BouncyCastle.X509.X509Certificate LoadPEMCert(string certPath)
+        {
+            using var sr = new StreamReader(certPath);
+            return (Org.BouncyCastle.X509.X509Certificate)new PemReader(sr).ReadObject();
+        }
+
+        /// <summary>兼容旧调用：证书 + 私钥文件加载为 .NET 对象（供 DNS/TLS 等服务使用）。</summary>
         public static X509Certificate2 LoadPEMCert(string certFile, string keyFile = null)
         {
+            return X509Certificate2.CreateFromPemFile(certFile, keyFile);
+        }
 
-            X509Certificate2 crt = X509Certificate2.CreateFromPemFile(certFile, keyFile);
+        // ---------- CSR（PKCS#10） ----------
 
-            return crt;
+        public static Pkcs10CertificationRequest LoadCSR(string pem)
+        {
+            if (string.IsNullOrEmpty(pem)) throw new InvalidOperationException("CSR is empty.");
+            object obj;
+            using (var sr = new StringReader(pem.Trim()))
+            {
+                obj = new PemReader(sr).ReadObject();
+            }
+            if (obj is Pkcs10CertificationRequest csr) return csr;
+            throw new InvalidOperationException("Not a valid PKCS#10 CSR.");
+        }
+
+        /// <summary>提取 CSR 中请求的 SAN（DNS/IP），没有则返回空数组。</summary>
+        public static string[] ExtractCSRSANs(Pkcs10CertificationRequest csr)
+        {
+            var exts = csr.GetRequestedExtensions();
+            if (exts == null) return new string[0];
+            var san = exts.GetExtension(X509Extensions.SubjectAlternativeName);
+            if (san == null) return new string[0];
+            var names = GeneralNames.GetInstance(san.GetParsedValue());
+            var list = new List<string>();
+            foreach (var gn in names.GetNames())
+            {
+                if (gn.TagNo == GeneralName.DnsName) list.Add(gn.Name.ToString());
+                else if (gn.TagNo == GeneralName.IPAddress) list.Add(gn.Name.ToString());
+            }
+            return list.ToArray();
         }
     }
 }

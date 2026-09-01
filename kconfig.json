@@ -1,7 +1,14 @@
 {
   "Kestrel": {
     "Endpoints": {
-      //"https": { "Url": "https://*:443/" },
+      "https": {
+        "Url": "https://*:443/",
+        "Certificate": {
+          "Path": "localhost.ksyuki.com.pem",
+          "KeyPath": "localhost.ksyuki.com.key",
+          "Password": ""
+        }
+      },
       "http": { "Url": "http://*:880/" }
     }
   }
